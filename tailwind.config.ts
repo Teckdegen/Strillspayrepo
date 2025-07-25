@@ -27,7 +27,6 @@ export default {
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))',
-					glow: 'hsl(var(--primary-glow))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -48,83 +47,18 @@ export default {
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
-				},
-				/* Neon Colors for Lit UI */
-				'neon-pink': 'hsl(var(--neon-pink))',
-				'electric-blue': 'hsl(var(--electric-blue))',
-				'lime-green': 'hsl(var(--lime-green))'
+				}
 			},
-			backgroundImage: {
-				'gradient-primary': 'var(--gradient-primary)',
-				'gradient-secondary': 'var(--gradient-secondary)',
-				'gradient-success': 'var(--gradient-success)',
-				'gradient-radial': 'var(--gradient-radial)'
-			},
-			boxShadow: {
-				'glow-primary': 'var(--glow-primary)',
-				'glow-neon-pink': 'var(--glow-neon-pink)',
-				'glow-electric-blue': 'var(--glow-electric-blue)',
-				'glow-lime-green': 'var(--glow-lime-green)',
-				'neon': '0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor',
-				'neon-lg': '0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor'
-			},
-			animation: {
-				'pulse-glow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-				'fade-in': 'fadeIn 0.5s ease-out',
-				'scale-in': 'scaleIn 0.3s ease-out',
-				'glow': 'glow 2s ease-in-out infinite alternate'
-			},
+			// Remove all backgroundImage and boxShadow extensions for strict black/white
+			backgroundImage: {},
+			boxShadow: {},
+			animation: {},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
-			keyframes: {
-				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
-				},
-				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
-				},
-				'fadeIn': {
-					'0%': {
-						opacity: '0',
-						transform: 'translateY(10px)'
-					},
-					'100%': {
-						opacity: '1',
-						transform: 'translateY(0)'
-					}
-				},
-				'scaleIn': {
-					'0%': {
-						transform: 'scale(0.95)',
-						opacity: '0'
-					},
-					'100%': {
-						transform: 'scale(1)',
-						opacity: '1'
-					}
-				},
-				'glow': {
-					'0%': {
-						boxShadow: '0 0 5px currentColor'
-					},
-					'100%': {
-						boxShadow: '0 0 20px currentColor, 0 0 30px currentColor'
-					}
-				}
-			}
+			keyframes: {}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
