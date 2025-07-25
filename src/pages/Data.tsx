@@ -88,23 +88,23 @@ const Data: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-radial flex items-center justify-center p-6">
+    <div className="min-h-screen bg-black flex items-center justify-center p-6">
       <div className="w-full max-w-md mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center mb-6">
-            <Wifi className="w-12 h-12 text-electric-blue mr-3" />
-            <h1 className="text-4xl font-extrabold text-transparent bg-gradient-to-r from-primary to-electric-blue bg-clip-text">
+            <Wifi className="w-12 h-12 text-white mr-3" />
+            <h1 className="text-4xl font-extrabold text-white">
               Data
             </h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-white">
             Buy data plans with USDC
           </p>
         </div>
 
         {/* Form */}
-        <LitCard className="space-y-6">
+        <LitCard className="space-y-6 border-white">
           <LitSelect
             label="Network"
             value={formData.network}
@@ -142,7 +142,7 @@ const Data: React.FC = () => {
             const selectedNetwork = NETWORKS.find(n => n.network_id === formData.network);
             const selectedPlan = getDataPlansByNetwork(selectedNetwork?.name || '').find(p => p.plan_id === formData.plan);
             return selectedPlan && selectedPlan.available ? (
-              <div className="text-sm text-muted-foreground bg-secondary/50 p-4 rounded-lg border border-electric-blue/30">
+              <div className="text-sm text-white bg-black p-4 rounded-lg border border-white">
                 <p className="mb-2">• Plan: {selectedPlan.data_size}</p>
                 <p className="mb-2">• Amount: ₦{selectedPlan.amount.toLocaleString()}</p>
                 <p className="mb-2">• Validity: {selectedPlan.validity_days} days</p>
@@ -157,7 +157,7 @@ const Data: React.FC = () => {
             size="lg"
             glow
             onClick={handleNext}
-            className="w-full"
+            className="w-full text-white"
             disabled={!formData.network || !formData.plan || !formData.phone}
           >
             Next
@@ -169,9 +169,9 @@ const Data: React.FC = () => {
           <LitButton
             variant="secondary"
             onClick={() => navigate('/')}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 text-white"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 text-white" />
             <span>Back to Home</span>
           </LitButton>
         </div>
