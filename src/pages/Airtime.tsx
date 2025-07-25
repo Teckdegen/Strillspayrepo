@@ -69,23 +69,23 @@ const Airtime: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6">
+    <div className="min-h-screen bg-white flex items-center justify-center p-6">
       <div className="w-full max-w-md mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center mb-6">
-            <Smartphone className="w-12 h-12 text-white mr-3" />
-            <h1 className="text-4xl font-extrabold text-white">
+            <Smartphone className="w-12 h-12 text-black mr-3" />
+            <h1 className="text-4xl font-extrabold text-black">
               Airtime
             </h1>
           </div>
-          <p className="text-white">
+          <p className="text-black">
             Top up your phone with USDC
           </p>
         </div>
 
         {/* Form */}
-        <LitCard className="space-y-6 border-white">
+        <LitCard className="space-y-6 border-black">
           <LitSelect
             label="Network"
             value={formData.network}
@@ -116,7 +116,7 @@ const Airtime: React.FC = () => {
             error={errors.amount}
           />
 
-          <div className="text-sm text-white bg-black p-4 rounded-lg border border-white">
+          <div className="text-sm text-black bg-white p-4 rounded-lg border border-black">
             <p className="mb-2">• Minimum amount: ₦50</p>
             <p className="mb-2">• 2% platform fee applies</p>
             <p>• Instant delivery upon confirmation</p>
@@ -127,7 +127,7 @@ const Airtime: React.FC = () => {
             size="lg"
             glow
             onClick={handleNext}
-            className="w-full text-white"
+            className="w-full text-black"
           >
             Next
           </LitButton>
@@ -138,9 +138,9 @@ const Airtime: React.FC = () => {
           <LitButton
             variant="secondary"
             onClick={() => navigate('/')}
-            className="flex items-center space-x-2 text-white"
+            className="flex items-center space-x-2 text-black"
           >
-            <ArrowLeft className="w-5 h-5 text-white" />
+            <ArrowLeft className="w-5 h-5 text-black" />
             <span>Back to Home</span>
           </LitButton>
         </div>
