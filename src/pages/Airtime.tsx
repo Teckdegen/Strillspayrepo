@@ -69,23 +69,23 @@ const Airtime: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-radial flex items-center justify-center p-6">
+    <div className="min-h-screen bg-black flex items-center justify-center p-6">
       <div className="w-full max-w-md mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center mb-6">
-            <Smartphone className="w-12 h-12 text-neon-pink mr-3" />
-            <h1 className="text-4xl font-extrabold text-transparent bg-gradient-to-r from-primary to-neon-pink bg-clip-text">
+            <Smartphone className="w-12 h-12 text-white mr-3" />
+            <h1 className="text-4xl font-extrabold text-white">
               Airtime
             </h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-white">
             Top up your phone with USDC
           </p>
         </div>
 
         {/* Form */}
-        <LitCard className="space-y-6">
+        <LitCard className="space-y-6 border-white">
           <LitSelect
             label="Network"
             value={formData.network}
@@ -116,7 +116,7 @@ const Airtime: React.FC = () => {
             error={errors.amount}
           />
 
-          <div className="text-sm text-muted-foreground bg-secondary/50 p-4 rounded-lg border border-primary/30">
+          <div className="text-sm text-white bg-black p-4 rounded-lg border border-white">
             <p className="mb-2">• Minimum amount: ₦50</p>
             <p className="mb-2">• 2% platform fee applies</p>
             <p>• Instant delivery upon confirmation</p>
@@ -127,7 +127,7 @@ const Airtime: React.FC = () => {
             size="lg"
             glow
             onClick={handleNext}
-            className="w-full"
+            className="w-full text-white"
           >
             Next
           </LitButton>
@@ -138,9 +138,9 @@ const Airtime: React.FC = () => {
           <LitButton
             variant="secondary"
             onClick={() => navigate('/')}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 text-white"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 text-white" />
             <span>Back to Home</span>
           </LitButton>
         </div>
