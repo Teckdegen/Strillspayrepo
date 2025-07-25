@@ -11,6 +11,8 @@ import Home from './pages/Home';
 import Wallet from './pages/Wallet';
 import Airtime from './pages/Airtime';
 import Data from './pages/Data';
+import Cable from './pages/Cable';
+import Electricity from './pages/Electricity';
 import NotFound from './pages/NotFound';
 
 const config = getDefaultConfig({
@@ -44,6 +46,8 @@ const App = () => (
             <Route path="/wallet" element={<Wallet />} />
             <Route path="/airtime" element={<Airtime />} />
             <Route path="/data" element={<Data />} />
+            <Route path="/cable" element={<Cable />} />
+            <Route path="/electricity" element={<Electricity />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
