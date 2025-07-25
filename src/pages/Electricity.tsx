@@ -58,19 +58,19 @@ const Electricity = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background/50 to-background flex items-center justify-center p-6">
+    <div className="min-h-screen bg-black flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
+          <h1 className="text-4xl font-bold text-white mb-2">
             Electricity
           </h1>
-          <p className="text-muted-foreground">Top up your electricity meter</p>
+          <p className="text-white">Top up your electricity meter</p>
         </div>
 
-        <LitCard className="space-y-6">
+        <LitCard className="space-y-6 border-white">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-accent mb-2">
+              <label className="block text-sm font-medium text-white mb-2">
                 Select Provider
               </label>
               <LitSelect
@@ -85,12 +85,12 @@ const Electricity = () => {
                 ]}
               />
               {errors.providerId && (
-                <p className="text-destructive text-sm mt-1">{errors.providerId}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.providerId}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-accent mb-2">
+              <label className="block text-sm font-medium text-white mb-2">
                 Meter Number
               </label>
               <LitInput
@@ -101,12 +101,12 @@ const Electricity = () => {
                 maxLength={13}
               />
               {errors.meterNumber && (
-                <p className="text-destructive text-sm mt-1">{errors.meterNumber}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.meterNumber}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-accent mb-2">
+              <label className="block text-sm font-medium text-white mb-2">
                 Mobile Number
               </label>
               <LitInput
@@ -117,12 +117,12 @@ const Electricity = () => {
                 maxLength={11}
               />
               {errors.mobileNumber && (
-                <p className="text-destructive text-sm mt-1">{errors.mobileNumber}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.mobileNumber}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-accent mb-2">
+              <label className="block text-sm font-medium text-white mb-2">
                 Amount (₦)
               </label>
               <LitInput
@@ -133,7 +133,7 @@ const Electricity = () => {
                 min="1"
               />
               {errors.amount && (
-                <p className="text-destructive text-sm mt-1">{errors.amount}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.amount}</p>
               )}
             </div>
           </div>
@@ -142,11 +142,11 @@ const Electricity = () => {
             <LitButton
               variant="secondary"
               onClick={() => navigate('/')}
-              className="flex-1"
+              className="flex-1 text-white"
             >
               Back
             </LitButton>
-            <LitButton onClick={handleNext} className="flex-1">
+            <LitButton onClick={handleNext} className="flex-1 text-white">
               Next
             </LitButton>
           </div>
