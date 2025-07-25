@@ -13,6 +13,7 @@ import Airtime from './pages/Airtime';
 import Data from './pages/Data';
 import Cable from './pages/Cable';
 import Electricity from './pages/Electricity';
+import Confirmation from './pages/Confirmation';
 import NotFound from './pages/NotFound';
 
 const config = getDefaultConfig({
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/data" element={<Data />} />
             <Route path="/cable" element={<Cable />} />
             <Route path="/electricity" element={<Electricity />} />
+            <Route path="/confirm" element={<Confirmation />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
