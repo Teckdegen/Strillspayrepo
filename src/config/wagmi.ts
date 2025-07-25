@@ -1,6 +1,6 @@
 // Sonic Mainnet Configuration
 export const sonicMainnet = {
-  id: 64165,
+  id: 146,
   name: 'Sonic',
   nativeCurrency: {
     decimals: 18,
@@ -15,7 +15,7 @@ export const sonicMainnet = {
   blockExplorers: {
     default: {
       name: 'Sonic Explorer',
-      url: 'https://explorer.soniclabs.com',
+      url: 'https://sonicscan.org/',
     },
   },
 };
