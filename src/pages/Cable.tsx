@@ -51,19 +51,19 @@ const Cable = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background/50 to-background flex items-center justify-center p-6">
+    <div className="min-h-screen bg-black flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
+          <h1 className="text-4xl font-bold text-white mb-2">
             Cable TV
           </h1>
-          <p className="text-muted-foreground">Subscribe to your favorite channels</p>
+          <p className="text-white">Subscribe to your favorite channels</p>
         </div>
 
-        <LitCard className="space-y-6">
+        <LitCard className="space-y-6 border-white">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-accent mb-2">
+              <label className="block text-sm font-medium text-white mb-2">
                 Select Decoder
               </label>
               <LitSelect
@@ -81,12 +81,12 @@ const Cable = () => {
                 ]}
               />
               {errors.decoder && (
-                <p className="text-destructive text-sm mt-1">{errors.decoder}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.decoder}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-accent mb-2">
+              <label className="block text-sm font-medium text-white mb-2">
                 Select Plan
               </label>
               <LitSelect
@@ -102,12 +102,12 @@ const Cable = () => {
                 ]}
               />
               {errors.planId && (
-                <p className="text-destructive text-sm mt-1">{errors.planId}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.planId}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-accent mb-2">
+              <label className="block text-sm font-medium text-white mb-2">
                 Smartcard Number
               </label>
               <LitInput
@@ -118,7 +118,7 @@ const Cable = () => {
                 maxLength={10}
               />
               {errors.smartcard && (
-                <p className="text-destructive text-sm mt-1">{errors.smartcard}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.smartcard}</p>
               )}
             </div>
           </div>
@@ -127,11 +127,11 @@ const Cable = () => {
             <LitButton
               variant="secondary"
               onClick={() => navigate('/')}
-              className="flex-1"
+              className="flex-1 text-white"
             >
               Back
             </LitButton>
-            <LitButton onClick={handleNext} className="flex-1">
+            <LitButton onClick={handleNext} className="flex-1 text-white">
               Next
             </LitButton>
           </div>
