@@ -58,19 +58,19 @@ const Electricity = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6">
+    <div className="min-h-screen bg-white flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
+          <h1 className="text-4xl font-bold text-black mb-2">
             Electricity
           </h1>
-          <p className="text-white">Top up your electricity meter</p>
+          <p className="text-black">Top up your electricity meter</p>
         </div>
 
-        <LitCard className="space-y-6 border-white">
+        <LitCard className="space-y-6 border-black">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-white mb-2">
+              <label className="block text-sm font-medium text-black mb-2">
                 Select Provider
               </label>
               <LitSelect
@@ -90,7 +90,7 @@ const Electricity = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white mb-2">
+              <label className="block text-sm font-medium text-black mb-2">
                 Meter Number
               </label>
               <LitInput
@@ -106,7 +106,7 @@ const Electricity = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white mb-2">
+              <label className="block text-sm font-medium text-black mb-2">
                 Mobile Number
               </label>
               <LitInput
@@ -122,7 +122,7 @@ const Electricity = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white mb-2">
+              <label className="block text-sm font-medium text-black mb-2">
                 Amount (₦)
               </label>
               <LitInput
@@ -142,11 +142,11 @@ const Electricity = () => {
             <LitButton
               variant="secondary"
               onClick={() => navigate('/')}
-              className="flex-1 text-white"
+              className="flex-1 text-black"
             >
               Back
             </LitButton>
-            <LitButton onClick={handleNext} className="flex-1 text-white">
+            <LitButton onClick={handleNext} className="flex-1 text-black">
               Next
             </LitButton>
           </div>
