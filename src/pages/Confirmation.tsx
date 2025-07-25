@@ -68,86 +68,86 @@ const Confirmation = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6">
+    <div className="min-h-screen bg-white flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
+          <h1 className="text-4xl font-bold text-black mb-2">
             Confirm Payment
           </h1>
-          <p className="text-white">Review your transaction details</p>
+          <p className="text-black">Review your transaction details</p>
         </div>
 
-        <LitCard className="space-y-6 border-white">
+        <LitCard className="space-y-6 border-black">
           <div className="space-y-4">
-            <div className="border-b border-white pb-4">
-              <h3 className="text-lg font-semibold text-white mb-3">Transaction Details</h3>
+            <div className="border-b border-black pb-4">
+              <h3 className="text-lg font-semibold text-black mb-3">Transaction Details</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-white">Service:</span>
-                  <span className="text-white font-medium">{state.service}</span>
+                  <span className="text-black">Service:</span>
+                  <span className="text-black font-medium">{state.service}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white">Provider:</span>
-                  <span className="text-white font-medium">{state.provider}</span>
+                  <span className="text-black">Provider:</span>
+                  <span className="text-black font-medium">{state.provider}</span>
                 </div>
                 {state.plan && (
                   <div className="flex justify-between">
-                    <span className="text-white">Plan:</span>
-                    <span className="text-white font-medium">{state.plan.name}</span>
+                    <span className="text-black">Plan:</span>
+                    <span className="text-black font-medium">{state.plan.name}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-white">
+                  <span className="text-black">
                     {state.service === 'Electricity' ? 'Meter Number:' : 
                      state.service === 'Cable' ? 'Smartcard:' : 'Phone Number:'}
                   </span>
-                  <span className="text-white font-medium">{state.recipient}</span>
+                  <span className="text-black font-medium">{state.recipient}</span>
                 </div>
                 {state.mobileNumber && (
                   <div className="flex justify-between">
-                    <span className="text-white">Mobile Number:</span>
-                    <span className="text-white font-medium">{state.mobileNumber}</span>
+                    <span className="text-black">Mobile Number:</span>
+                    <span className="text-black font-medium">{state.mobileNumber}</span>
                   </div>
                 )}
               </div>
             </div>
-            <div className="border-b border-white pb-4">
-              <h3 className="text-lg font-semibold text-white mb-3">Payment Summary</h3>
+            <div className="border-b border-black pb-4">
+              <h3 className="text-lg font-semibold text-black mb-3">Payment Summary</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-white">Amount:</span>
-                  <span className="text-white font-medium">₦{state.amount.toLocaleString()}</span>
+                  <span className="text-black">Amount:</span>
+                  <span className="text-black font-medium">₦{state.amount.toLocaleString()}</span>
                 </div>
                 {loading ? (
                   <div className="flex justify-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
                   </div>
                 ) : (
                   <>
                     <div className="flex justify-between">
-                      <span className="text-white">Exchange Rate:</span>
-                      <span className="text-white font-medium">₦{exchangeRate.toLocaleString()}/USDC</span>
+                      <span className="text-black">Exchange Rate:</span>
+                      <span className="text-black font-medium">₦{exchangeRate.toLocaleString()}/USDC</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-white">Base USDC:</span>
-                      <span className="text-white font-medium">{usdcAmount.baseUsdc} USDC</span>
+                      <span className="text-black">Base USDC:</span>
+                      <span className="text-black font-medium">{usdcAmount.baseUsdc} USDC</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-red-500">Platform Fee (2%):</span>
                       <span className="text-red-500 font-medium">{usdcAmount.fee} USDC</span>
                     </div>
-                    <div className="flex justify-between border-t border-white pt-2">
-                      <span className="text-white font-semibold">Total USDC:</span>
-                      <span className="text-white font-bold">{usdcAmount.totalUsdc} USDC</span>
+                    <div className="flex justify-between border-t border-black pt-2">
+                      <span className="text-black font-semibold">Total USDC:</span>
+                      <span className="text-black font-bold">{usdcAmount.totalUsdc} USDC</span>
                     </div>
                   </>
                 )}
               </div>
             </div>
-            <div className="bg-black border border-white rounded-lg p-4">
-              <p className="text-sm text-white text-center">
+            <div className="bg-white border border-black rounded-lg p-4">
+              <p className="text-sm text-black text-center">
                 By confirming this payment, you agree to pay{' '}
-                <span className="text-white font-semibold">{usdcAmount.totalUsdc} USDC</span>{' '}
+                <span className="text-black font-semibold">{usdcAmount.totalUsdc} USDC</span>{' '}
                 (including 2% platform fee) for your {state.service.toLowerCase()} purchase.
               </p>
             </div>
@@ -156,13 +156,13 @@ const Confirmation = () => {
             <LitButton
               variant="secondary"
               onClick={handleBack}
-              className="flex-1 text-white"
+              className="flex-1 text-black"
             >
               Back
             </LitButton>
             <LitButton 
               onClick={handleConfirm} 
-              className="flex-1 text-white"
+              className="flex-1 text-black"
               disabled={loading}
             >
               {loading ? 'Loading...' : 'Confirm & Pay'}
