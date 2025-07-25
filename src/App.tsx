@@ -15,7 +15,7 @@ import NotFound from './pages/NotFound';
 
 const config = getDefaultConfig({
   appName: 'Strills',
-  projectId: process.env.REACT_APP_WALLET_CONNECT_PROJECT_ID || 'fallback-project-id',
+  projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || 'fallback-project-id',
   chains: [sonicMainnet] as any,
   ssr: false,
 });
