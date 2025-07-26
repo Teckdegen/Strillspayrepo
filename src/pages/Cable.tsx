@@ -51,19 +51,19 @@ const Cable = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-radial flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-black mb-2">
+          <h1 className="text-4xl font-bold text-foreground mb-2">
             Cable TV
           </h1>
-          <p className="text-black">Subscribe to your favorite channels</p>
+          <p className="text-muted-foreground">Subscribe to your favorite channels</p>
         </div>
 
-        <LitCard className="space-y-6 border-black">
+        <LitCard className="space-y-6">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-black mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Select Decoder
               </label>
               <LitSelect
@@ -86,7 +86,7 @@ const Cable = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Select Plan
               </label>
               <LitSelect
@@ -107,7 +107,7 @@ const Cable = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Smartcard Number
               </label>
               <LitInput
@@ -127,11 +127,11 @@ const Cable = () => {
             <LitButton
               variant="secondary"
               onClick={() => navigate('/')}
-              className="flex-1 text-black"
+              className="flex-1"
             >
               Back
             </LitButton>
-            <LitButton onClick={handleNext} className="flex-1 text-black">
+            <LitButton onClick={handleNext} className="flex-1">
               Next
             </LitButton>
           </div>

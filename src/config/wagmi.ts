@@ -44,13 +44,6 @@ export const USDC_ABI = [
     name: 'balanceOf',
     outputs: [{ name: 'balance', type: 'uint256' }],
     type: 'function'
-  },
-  {
-    constant: true,
-    inputs: [],
-    name: 'decimals',
-    outputs: [{ name: '', type: 'uint8' }],
-    type: 'function'
   }
 ] as const;
 

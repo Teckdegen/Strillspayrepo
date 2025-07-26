@@ -38,7 +38,10 @@ const Confirmation = () => {
   const [processing, setProcessing] = useState(false);
 
   const { writeContract, data: hash, error } = useWriteContract();
-  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ 
+    hash,
+    chainId: sonicMainnet.id 
+  });
 
   useEffect(() => {
     const loadExchangeRate = async () => {
