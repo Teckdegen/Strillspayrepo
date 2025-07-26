@@ -30,7 +30,7 @@ const Wallet: React.FC = () => {
 
   const openExplorer = () => {
     if (address) {
-      window.open(`https://explorer.soniclabs.com/address/${address}`, '_blank');
+      window.open(`https://sonicscan.org/address/${address}`, '_blank');
     }
   };
 
@@ -40,8 +40,8 @@ const Wallet: React.FC = () => {
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center mb-6">
-            <WalletIcon className="w-12 h-12 text-neon-pink mr-3" />
-            <h1 className="text-4xl font-extrabold text-transparent bg-gradient-to-r from-primary to-neon-pink bg-clip-text">
+            <WalletIcon className="w-12 h-12 text-primary mr-3" />
+            <h1 className="text-4xl font-extrabold text-foreground">
               Wallet
             </h1>
           </div>
@@ -52,7 +52,7 @@ const Wallet: React.FC = () => {
           <LitCard className="space-y-6">
             {/* Address */}
             <div className="space-y-3">
-              <label className="block text-sm font-bold text-neon-pink">
+              <label className="block text-sm font-bold text-primary">
                 Wallet Address
               </label>
               <div className="flex items-center space-x-2">
@@ -80,14 +80,14 @@ const Wallet: React.FC = () => {
 
             {/* USDC Balance */}
             <div className="space-y-3">
-              <label className="block text-sm font-bold text-neon-pink">
+              <label className="block text-sm font-bold text-primary">
                 USDC Balance
               </label>
-              <div className="px-4 py-6 bg-gradient-to-r from-primary to-primary-glow rounded-lg text-center">
-                <div className="text-3xl font-bold text-white">
+              <div className="px-4 py-6 bg-gradient-primary rounded-lg text-center shadow-glow-primary">
+                <div className="text-3xl font-bold text-primary-foreground">
                   {usdcBalance ? `${parseFloat(usdcBalance.formatted).toFixed(2)}` : '0.00'}
                 </div>
-                <div className="text-sm text-gray-200 mt-1">
+                <div className="text-sm text-primary-foreground/80 mt-1">
                   USDC on Sonic
                 </div>
               </div>
@@ -95,16 +95,16 @@ const Wallet: React.FC = () => {
 
             {/* Network Info */}
             <div className="space-y-3">
-              <label className="block text-sm font-bold text-neon-pink">
+              <label className="block text-sm font-bold text-primary">
                 Network
               </label>
-              <div className="px-4 py-3 bg-input border-2 border-lime-green rounded-lg">
+              <div className="px-4 py-3 bg-input border-2 border-primary rounded-lg">
                 <div className="flex items-center justify-between">
                   <span className="text-foreground font-medium">Sonic Mainnet</span>
-                  <div className="w-3 h-3 bg-lime-green rounded-full animate-pulse"></div>
+                  <div className="w-3 h-3 bg-primary rounded-full animate-pulse"></div>
                 </div>
                 <div className="text-sm text-muted-foreground mt-1">
-                  Chain ID: 64165
+                  Chain ID: 146
                 </div>
               </div>
             </div>

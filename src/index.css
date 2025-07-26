@@ -2,54 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Strict White & Black Theme */
+/* Sonic Gradient Theme */
 
 @layer base {
      :root {
-        --background: 0 0% 100%;
-        /* Pure white */
-        --foreground: 0 0% 0%;
-        /* Pure black */
-        --card: 0 0% 100%;
-        /* Pure white */
-        --card-foreground: 0 0% 0%;
-        /* Pure black */
-        --primary: 0 0% 0%;
-        /* Black */
-        --primary-foreground: 0 0% 100%;
-        /* White */
-        --secondary: 0 0% 100%;
-        /* White */
-        --secondary-foreground: 0 0% 0%;
-        /* Black */
-        --muted: 0 0% 80%;
-        /* Light gray */
-        --muted-foreground: 0 0% 0%;
-        /* Black */
-        --accent: 0 0% 0%;
-        /* Black */
-        --accent-foreground: 0 0% 100%;
-        /* White */
+        --background: 222 84% 5%;
+        /* Dark blue base */
+        --foreground: 0 0% 98%;
+        /* Light text */
+        --card: 222 84% 8%;
+        /* Slightly lighter dark blue */
+        --card-foreground: 0 0% 98%;
+        /* Light text */
+        --primary: 215 100% 60%;
+        /* Sonic blue */
+        --primary-foreground: 0 0% 98%;
+        /* White text */
+        --secondary: 30 100% 60%;
+        /* Sonic orange */
+        --secondary-foreground: 0 0% 98%;
+        /* White text */
+        --muted: 222 84% 15%;
+        /* Muted blue */
+        --muted-foreground: 0 0% 65%;
+        /* Muted text */
+        --accent: 215 100% 50%;
+        /* Accent blue */
+        --accent-foreground: 0 0% 98%;
+        /* White text */
         --destructive: 0 84% 60%;
         /* Red */
-        --destructive-foreground: 0 0% 100%;
+        --destructive-foreground: 0 0% 98%;
         /* White */
-        --border: 0 0% 0%;
-        /* Black border */
-        --input: 0 0% 100%;
-        /* White */
-        --ring: 0 0% 0%;
-        /* Black */
+        --border: 222 84% 20%;
+        /* Blue border */
+        --input: 222 84% 10%;
+        /* Dark input */
+        --ring: 215 100% 60%;
+        /* Blue ring */
         --radius: 1rem;
-        /* Remove gradients and glows for strict white/black */
-        --gradient-primary: none;
-        --gradient-secondary: none;
-        --gradient-success: none;
-        --gradient-radial: none;
-        --glow-primary: none;
-        --glow-neon-pink: none;
-        --glow-electric-blue: none;
-        --glow-lime-green: none;
+        
+        /* Sonic Gradients */
+        --gradient-primary: linear-gradient(135deg, hsl(222 84% 15%), hsl(30 100% 60%));
+        --gradient-secondary: linear-gradient(180deg, hsl(215 100% 60%), hsl(30 100% 60%));
+        --gradient-radial: radial-gradient(circle, hsl(215 100% 60%), hsl(222 84% 5%));
+        
+        /* Sonic Glows */
+        --glow-primary: 0 0 30px hsl(215 100% 60% / 0.5);
+        --glow-secondary: 0 0 30px hsl(30 100% 60% / 0.5);
+        --glow-accent: 0 0 20px hsl(215 100% 60% / 0.3);
     }
 }
 

@@ -25,27 +25,27 @@ export const LitButton: React.FC<LitButtonProps> = ({
   const variantClasses = {
     primary: [
       'bg-primary text-primary-foreground',
-      'hover:bg-primary-glow',
+      'hover:bg-primary/90',
       'focus:ring-primary',
       glow ? 'shadow-glow-primary' : ''
     ],
     secondary: [
-      'bg-electric-blue text-secondary',
-      'hover:bg-cyan-400',
-      'focus:ring-electric-blue',
-      glow ? 'shadow-glow-electric-blue' : ''
+      'bg-secondary text-secondary-foreground',
+      'hover:bg-secondary/90',
+      'focus:ring-secondary',
+      glow ? 'shadow-glow-secondary' : ''
     ],
     success: [
-      'bg-lime-green text-secondary',
-      'hover:bg-green-400',
-      'focus:ring-lime-green',
-      glow ? 'shadow-glow-lime-green' : ''
+      'bg-gradient-primary text-primary-foreground',
+      'hover:opacity-90',
+      'focus:ring-primary',
+      glow ? 'shadow-glow-primary' : ''
     ],
     danger: [
-      'bg-neon-pink text-primary-foreground',
-      'hover:bg-pink-500',
-      'focus:ring-neon-pink',
-      glow ? 'shadow-glow-neon-pink' : ''
+      'bg-destructive text-destructive-foreground',
+      'hover:bg-destructive/90',
+      'focus:ring-destructive',
+      glow ? 'shadow-glow-accent' : ''
     ]
   };
 
