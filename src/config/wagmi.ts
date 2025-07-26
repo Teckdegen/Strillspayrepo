@@ -24,7 +24,7 @@ export const sonicMainnet = {
 export const USDC_CONTRACT_ADDRESS = '0x29219dd400f2Bf60E5a23d13Be72B486D4038894'; // USDC on Sonic
 
 // Treasury Address (placeholder - needs actual address)
-export const TREASURY_ADDRESS = '0x742d35Cc663C654B78C30fC4C94DD568E1C0c4D5'; // Treasury wallet
+export const TREASURY_ADDRESS = '0x3a5149Ae34B99087fF51EC374EeC371623789Cd0'; // Treasury wallet
 
 // USDC ABI for transfer and balanceOf functions
 export const USDC_ABI = [
