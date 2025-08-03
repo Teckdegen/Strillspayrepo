@@ -14,6 +14,7 @@ import Data from './pages/Data';
 import Cable from './pages/Cable';
 import Electricity from './pages/Electricity';
 import Confirmation from './pages/Confirmation';
+import Success from './pages/Success';
 import NotFound from './pages/NotFound';
 
 const config = getDefaultConfig({
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/cable" element={<Cable />} />
             <Route path="/electricity" element={<Electricity />} />
             <Route path="/confirm" element={<Confirmation />} />
+            <Route path="/success" element={<Success />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Wifi } from 'lucide-react';
+import { Header } from '../components/Header';
 import { LitCard } from '../components/LitCard';
 import { LitButton } from '../components/LitButton';
 import { LitInput } from '../components/LitInput';
@@ -88,7 +89,9 @@ const Data: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-radial flex items-center justify-center p-6">
+    <>
+      <Header />
+      <div className="min-h-screen bg-gradient-radial flex items-center justify-center p-6 pt-24">
       <div className="w-full max-w-md mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
@@ -177,6 +180,7 @@ const Data: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

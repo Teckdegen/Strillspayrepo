@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAccount, useBalance } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { ArrowLeft, Wallet as WalletIcon, Copy, ExternalLink } from 'lucide-react';
+import { Header } from '../components/Header';
 import { LitCard } from '../components/LitCard';
 import { LitButton } from '../components/LitButton';
 import { USDC_CONTRACT_ADDRESS } from '../config/wagmi';
@@ -35,7 +36,9 @@ const Wallet: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-radial flex items-center justify-center p-6">
+    <>
+      <Header />
+      <div className="min-h-screen bg-gradient-radial flex items-center justify-center p-6 pt-24">
       <div className="w-full max-w-md mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
@@ -151,6 +154,7 @@ const Wallet: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

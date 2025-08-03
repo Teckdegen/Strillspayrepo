@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Tv } from 'lucide-react';
+import { Header } from '../components/Header';
 import { LitCard } from '../components/LitCard';
 import { LitSelect } from '../components/LitSelect';
 import { LitInput } from '../components/LitInput';
@@ -51,7 +53,9 @@ const Cable = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-radial flex items-center justify-center p-6">
+    <>
+      <Header />
+      <div className="min-h-screen bg-gradient-radial flex items-center justify-center p-6 pt-24">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">
@@ -138,6 +142,7 @@ const Cable = () => {
         </LitCard>
       </div>
     </div>
+    </>
   );
 };
 

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
+import { Header } from '../components/Header';
 import { LitCard } from '../components/LitCard';
 import { LitButton } from '../components/LitButton';
 import { fetchExchangeRate, convertNairaToUSDC } from '../constants';
@@ -96,47 +97,61 @@ const Confirmation = () => {
     }
   };
 
-  // Handle transaction confirmation
+  // Handle transaction confirmation with 5-second delay
   useEffect(() => {
     if (isConfirmed && hash) {
       toast.success('Payment successful! Processing your order...');
+      setProcessing(true);
       
-      // Call Easy Top Up API after successful payment
-      const processOrder = async () => {
-        try {
-          const apiPayload = {
-            service: state.service.toLowerCase(),
-            network_id: state.networkId,
-            disco_id: state.discoId,
-            plan_id: state.planId,
-            recipient: state.recipient,
-            mobile_number: state.mobileNumber,
-            amount: state.amount,
-            transaction_hash: hash,
-          };
-          
-          // Replace with actual Easy Top Up API endpoint
-          const response = await fetch('/api/easy-topup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(apiPayload),
-          });
-          
-          if (response.ok) {
-            toast.success('Service activated successfully!');
-          } else {
+      // Wait 5 seconds before calling the API
+      const delayTimer = setTimeout(() => {
+        const processOrder = async () => {
+          try {
+            const apiPayload = {
+              service: state.service.toLowerCase(),
+              network_id: state.networkId,
+              disco_id: state.discoId,
+              plan_id: state.planId,
+              recipient: state.recipient,
+              mobile_number: state.mobileNumber,
+              amount: state.amount,
+              transaction_hash: hash,
+            };
+            
+            // Replace with actual Easy Top Up API endpoint
+            const response = await fetch('/api/easy-topup', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(apiPayload),
+            });
+            
+            if (response.ok) {
+              toast.success('Service activated successfully!');
+              // Navigate to success page
+              navigate('/success', {
+                state: {
+                  service: state.service,
+                  provider: state.provider,
+                  amount: state.amount,
+                  recipient: state.recipient,
+                  transactionHash: hash,
+                }
+              });
+            } else {
+              toast.error('Service activation failed. Please contact support.');
+              setProcessing(false);
+            }
+          } catch (err) {
+            console.error('API call failed:', err);
             toast.error('Service activation failed. Please contact support.');
+            setProcessing(false);
           }
-        } catch (err) {
-          console.error('API call failed:', err);
-          toast.error('Service activation failed. Please contact support.');
-        } finally {
-          setProcessing(false);
-          navigate('/');
-        }
-      };
-      
-      processOrder();
+        };
+        
+        processOrder();
+      }, 5000); // 5-second delay
+
+      return () => clearTimeout(delayTimer);
     }
   }, [isConfirmed, hash, state, navigate]);
 
@@ -157,8 +172,10 @@ const Confirmation = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-radial flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
+    <>
+      <Header />
+      <div className="min-h-screen bg-gradient-radial flex items-center justify-center p-6 pt-24">
+        <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">
             Confirm Payment
@@ -262,6 +279,7 @@ const Confirmation = () => {
         </LitCard>
       </div>
     </div>
+    </>
   );
 };
 
