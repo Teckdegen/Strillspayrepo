@@ -111,7 +111,7 @@ const Confirmation = () => {
             let apiPayload = {};
             
             if (state.service.toLowerCase() === 'airtime') {
-              apiUrl = 'https://{website_url}/api/v1/airtime';
+              apiUrl = 'https://easytopup.ng/api/v1/airtime';
               apiPayload = {
                 network_id: state.networkId,
                 phone: state.recipient,
