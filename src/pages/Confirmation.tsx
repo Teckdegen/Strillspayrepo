@@ -107,23 +107,37 @@ const Confirmation = () => {
       const delayTimer = setTimeout(() => {
         const processOrder = async () => {
           try {
-            const apiPayload = {
-              service: state.service.toLowerCase(),
-              network_id: state.networkId,
-              disco_id: state.discoId,
-              plan_id: state.planId,
-              recipient: state.recipient,
-              mobile_number: state.mobileNumber,
-              amount: state.amount,
-              transaction_hash: hash,
-            };
+            let apiUrl = '';
+            let apiPayload = {};
             
-            // Easy Top Up API endpoint with API key
-            const response = await fetch('/api/easy-topup', {
+            if (state.service.toLowerCase() === 'airtime') {
+              apiUrl = 'https://{website_url}/api/v1/airtime';
+              apiPayload = {
+                network_id: state.networkId,
+                phone: state.recipient,
+                amount: state.amount.toString(),
+                type: "VTU"
+              };
+            } else {
+              // For other services, use the original endpoint
+              apiUrl = '/api/easy-topup';
+              apiPayload = {
+                service: state.service.toLowerCase(),
+                network_id: state.networkId,
+                disco_id: state.discoId,
+                plan_id: state.planId,
+                recipient: state.recipient,
+                mobile_number: state.mobileNumber,
+                amount: state.amount,
+                transaction_hash: hash,
+              };
+            }
+            
+            const response = await fetch(apiUrl, {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer 84d5c7717d131cf2b5b2c6b1fbcace33'
+                'Authorization': `Bearer ${state.service.toLowerCase() === 'airtime' ? '186e38dcfcdf3421e44236229d6ad8c9' : '84d5c7717d131cf2b5b2c6b1fbcace33'}`
               },
               body: JSON.stringify(apiPayload),
             });
