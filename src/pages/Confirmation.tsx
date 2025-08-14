@@ -118,10 +118,13 @@ const Confirmation = () => {
               transaction_hash: hash,
             };
             
-            // Replace with actual Easy Top Up API endpoint
+            // Easy Top Up API endpoint with API key
             const response = await fetch('/api/easy-topup', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer 84d5c7717d131cf2b5b2c6b1fbcace33'
+              },
               body: JSON.stringify(apiPayload),
             });
             
