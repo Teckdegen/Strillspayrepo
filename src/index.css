@@ -6,51 +6,51 @@
 
 @layer base {
      :root {
-        --background: 222 84% 5%;
-        /* Dark blue base */
+        --background: 0 0% 8%;
+        /* Deep black base */
         --foreground: 0 0% 98%;
         /* Light text */
-        --card: 222 84% 8%;
-        /* Slightly lighter dark blue */
+        --card: 0 0% 12%;
+        /* Slightly lighter black */
         --card-foreground: 0 0% 98%;
         /* Light text */
-        --primary: 215 100% 60%;
-        /* Sonic blue */
+        --primary: 280 100% 70%;
+        /* Vibrant purple */
         --primary-foreground: 0 0% 98%;
         /* White text */
-        --secondary: 30 100% 60%;
-        /* Sonic orange */
+        --secondary: 285 100% 60%;
+        /* Deep purple */
         --secondary-foreground: 0 0% 98%;
         /* White text */
-        --muted: 222 84% 15%;
-        /* Muted blue */
+        --muted: 0 0% 20%;
+        /* Muted black */
         --muted-foreground: 0 0% 65%;
         /* Muted text */
-        --accent: 215 100% 50%;
-        /* Accent blue */
+        --accent: 275 100% 65%;
+        /* Accent purple */
         --accent-foreground: 0 0% 98%;
         /* White text */
         --destructive: 0 84% 60%;
         /* Red */
         --destructive-foreground: 0 0% 98%;
         /* White */
-        --border: 222 84% 20%;
-        /* Blue border */
-        --input: 222 84% 10%;
+        --border: 0 0% 25%;
+        /* Dark border */
+        --input: 0 0% 15%;
         /* Dark input */
-        --ring: 215 100% 60%;
-        /* Blue ring */
+        --ring: 280 100% 70%;
+        /* Purple ring */
         --radius: 1rem;
         
-        /* Sonic Gradients */
-        --gradient-primary: linear-gradient(135deg, hsl(222 84% 15%), hsl(30 100% 60%));
-        --gradient-secondary: linear-gradient(180deg, hsl(215 100% 60%), hsl(30 100% 60%));
-        --gradient-radial: radial-gradient(circle, hsl(215 100% 60%), hsl(222 84% 5%));
+        /* Purple Gradients */
+        --gradient-primary: linear-gradient(135deg, hsl(280 100% 70%), hsl(285 100% 60%));
+        --gradient-secondary: linear-gradient(180deg, hsl(275 100% 65%), hsl(280 100% 70%));
+        --gradient-radial: radial-gradient(circle, hsl(280 100% 70% / 0.3), hsl(0 0% 8%));
         
-        /* Sonic Glows */
-        --glow-primary: 0 0 30px hsl(215 100% 60% / 0.5);
-        --glow-secondary: 0 0 30px hsl(30 100% 60% / 0.5);
-        --glow-accent: 0 0 20px hsl(215 100% 60% / 0.3);
+        /* Purple Glows */
+        --glow-primary: 0 0 40px hsl(280 100% 70% / 0.6);
+        --glow-secondary: 0 0 30px hsl(285 100% 60% / 0.5);
+        --glow-accent: 0 0 25px hsl(275 100% 65% / 0.4);
     }
 }
 

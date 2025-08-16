@@ -118,8 +118,23 @@ const Confirmation = () => {
                 amount: state.amount.toString(),
                 type: "VTU"
               };
+            } else if (state.service.toLowerCase() === 'data') {
+              apiUrl = 'https://easytopup.ng/api/v1/data';
+              apiPayload = {
+                phone: state.recipient,
+                plan_id: state.planId,
+                network_id: state.networkId,
+                type: "VTU"
+              };
+            } else if (state.service.toLowerCase() === 'cable') {
+              apiUrl = 'https://easytopup.ng/api/v1/cable-validation';
+              apiPayload = {
+                cable_id: state.networkId,
+                smart_card_number: state.recipient,
+                type: "VTU"
+              };
             } else {
-              // For other services, use the original endpoint
+              // For electricity and other services, use the original endpoint
               apiUrl = '/api/easy-topup';
               apiPayload = {
                 service: state.service.toLowerCase(),
@@ -137,7 +152,7 @@ const Confirmation = () => {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${state.service.toLowerCase() === 'airtime' ? '186e38dcfcdf3421e44236229d6ad8c9' : '84d5c7717d131cf2b5b2c6b1fbcace33'}`
+                'Authorization': `Bearer ${['airtime', 'data', 'cable'].includes(state.service.toLowerCase()) ? '186e38dcfcdf3421e44236229d6ad8c9' : '84d5c7717d131cf2b5b2c6b1fbcace33'}`
               },
               body: JSON.stringify(apiPayload),
             });
@@ -204,14 +219,21 @@ const Confirmation = () => {
           <div className="space-y-4">
             <div className="border-b border-border pb-4">
               <h3 className="text-lg font-semibold text-foreground mb-3">Transaction Details</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Service:</span>
-                  <span className="text-foreground font-medium">{state.service}</span>
+                  <div className="bg-gradient-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                    {state.service}
+                  </div>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Provider:</span>
-                  <span className="text-foreground font-medium">{state.provider}</span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                      <span className="text-primary font-bold text-sm">{state.provider.charAt(0)}</span>
+                    </div>
+                    <span className="text-foreground font-medium">{state.provider}</span>
+                  </div>
                 </div>
                 {state.plan && (
                   <div className="flex justify-between">
