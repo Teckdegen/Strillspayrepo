@@ -1,15 +1,15 @@
 // Sonic Mainnet Configuration
 export const sonicMainnet = {
-  id: 146,
+  id: 11155111,
   name: 'Sonic',
   nativeCurrency: {
     decimals: 18,
-    name: 'Sonic',
-    symbol: 'S',
+    name: 'ETHH',
+    symbol: 'ETH',
   },
   rpcUrls: {
     default: {
-      http: ['https://rpc.soniclabs.com'],
+      http: ['https://rpc.sepolia.org'],
     },
   },
   blockExplorers: {
@@ -21,7 +21,7 @@ export const sonicMainnet = {
 };
 
 // USDC Contract Address on Sonic Mainnet (placeholder - needs actual address)
-export const USDC_CONTRACT_ADDRESS = '0x29219dd400f2Bf60E5a23d13Be72B486D4038894'; // USDC on Sonic
+export const USDC_CONTRACT_ADDRESS = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'; // USDC on Sonic
 
 // Treasury Address (placeholder - needs actual address)
 export const TREASURY_ADDRESS = '0x3a5149Ae34B99087fF51EC374EeC371623789Cd0'; // Treasury wallet
