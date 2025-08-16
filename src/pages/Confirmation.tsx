@@ -8,6 +8,7 @@ import { LitCard } from '../components/LitCard';
 import { LitButton } from '../components/LitButton';
 import { fetchExchangeRate, convertNairaToUSDC } from '../constants';
 import { USDC_CONTRACT_ADDRESS, TREASURY_ADDRESS, USDC_ABI, sonicMainnet } from '../config/wagmi';
+import { processAfterBlockchainConfirmation } from '../services/transactionService';
 
 interface ConfirmationState {
   service: string;
@@ -97,95 +98,63 @@ const Confirmation = () => {
     }
   };
 
-  // Handle transaction confirmation with 5-second delay
   useEffect(() => {
     if (isConfirmed && hash) {
-      toast.success('Payment successful! Processing your order...');
-      setProcessing(true);
+      toast.loading('Processing your transaction...');
       
-      // Wait 5 seconds before calling the API
-      const delayTimer = setTimeout(() => {
-        const processOrder = async () => {
-          try {
-            let apiUrl = '';
-            let apiPayload = {};
-            
-            if (state.service.toLowerCase() === 'airtime') {
-              apiUrl = 'https://easytopup.ng/api/v1/airtime';
-              apiPayload = {
-                network_id: state.networkId,
-                phone: state.recipient,
-                amount: state.amount.toString(),
-                type: "VTU"
-              };
-            } else if (state.service.toLowerCase() === 'data') {
-              apiUrl = 'https://easytopup.ng/api/v1/data';
-              apiPayload = {
-                phone: state.recipient,
-                plan_id: state.planId,
-                network_id: state.networkId,
-                type: "VTU"
-              };
-            } else if (state.service.toLowerCase() === 'cable') {
-              apiUrl = 'https://easytopup.ng/api/v1/cable-validation';
-              apiPayload = {
-                cable_id: state.networkId,
-                smart_card_number: state.recipient,
-                type: "VTU"
-              };
-            } else {
-              // For electricity and other services, use the original endpoint
-              apiUrl = '/api/easy-topup';
-              apiPayload = {
-                service: state.service.toLowerCase(),
-                network_id: state.networkId,
-                disco_id: state.discoId,
-                plan_id: state.planId,
-                recipient: state.recipient,
-                mobile_number: state.mobileNumber,
-                amount: state.amount,
-                transaction_hash: hash,
-              };
-            }
-            
-            const response = await fetch(apiUrl, {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${['airtime', 'data', 'cable'].includes(state.service.toLowerCase()) ? '186e38dcfcdf3421e44236229d6ad8c9' : '84d5c7717d131cf2b5b2c6b1fbcace33'}`
-              },
-              body: JSON.stringify(apiPayload),
-            });
-            
-            if (response.ok) {
-              toast.success('Service activated successfully!');
-              // Navigate to success page
-              navigate('/success', {
-                state: {
-                  service: state.service,
-                  provider: state.provider,
-                  amount: state.amount,
-                  recipient: state.recipient,
-                  transactionHash: hash,
-                }
-              });
-            } else {
-              toast.error('Service activation failed. Please contact support.');
-              setProcessing(false);
-            }
-          } catch (err) {
-            console.error('API call failed:', err);
-            toast.error('Service activation failed. Please contact support.');
-            setProcessing(false);
-          }
-        };
-        
-        processOrder();
-      }, 5000); // 5-second delay
+      // Prepare service data based on the service type
+      const serviceData = {
+        service: state.service,
+        network_id: state.network_id || state.networkId,
+        phone: state.phone || state.mobileNumber,
+        amount: state.amount?.toString(),
+        plan_id: state.plan_id || state.planId,
+        smart_card_number: state.smartcard || state.smart_card_number,
+        cable_id: state.cable_id || state.discoId,
+      };
 
-      return () => clearTimeout(delayTimer);
+      // Process the service after blockchain confirmation
+      const processService = async () => {
+        try {
+          const result = await processAfterBlockchainConfirmation(hash, serviceData);
+          
+          if (result.success) {
+            toast.dismiss();
+            toast.success('Service processed successfully!');
+            
+            // Navigate to success page with transaction details
+            navigate('/success', {
+              state: {
+                ...state,
+                txHash: hash,
+                usdcAmount: usdcAmount.totalUsdc,
+                serviceProcessed: true,
+              },
+            });
+          } else {
+            throw new Error(result.error || 'Failed to process service');
+          }
+        } catch (error: any) {
+          console.error('Service processing error:', error);
+          toast.dismiss();
+          toast.error(`Service processing failed: ${error.message}`);
+          
+          // Still navigate to success page but with error state
+          navigate('/success', {
+            state: {
+              ...state,
+              txHash: hash,
+              usdcAmount: usdcAmount.totalUsdc,
+              serviceProcessed: false,
+              serviceError: error.message,
+            },
+          });
+        }
+      };
+
+      processService();
     }
-  }, [isConfirmed, hash, state, navigate]);
+  }, [isConfirmed, hash, navigate, state, usdcAmount.totalUsdc]);
 
   useEffect(() => {
     if (error) {

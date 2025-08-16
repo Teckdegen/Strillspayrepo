@@ -11,6 +11,9 @@ interface SuccessState {
   amount: number;
   recipient: string;
   transactionHash: string;
+  usdcAmount?: number;
+  serviceProcessed?: boolean;
+  serviceError?: string;
 }
 
 const Success: React.FC = () => {
@@ -53,11 +56,34 @@ const Success: React.FC = () => {
             {/* Success Message */}
             <div className="space-y-4">
               <h1 className="text-3xl font-bold text-foreground">
-                Payment Successful! 🎉
+                {state.serviceProcessed === false 
+                  ? 'Payment Complete' 
+                  : 'Payment Successful! 🎉'}
               </h1>
-              <p className="text-muted-foreground">
-                Your {state.service.toLowerCase()} service has been activated successfully.
-              </p>
+              {state.serviceProcessed === undefined ? (
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">
+                    Processing your {state.service.toLowerCase()} request...
+                  </p>
+                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full animate-pulse w-3/4"></div>
+                  </div>
+                </div>
+              ) : state.serviceProcessed === true ? (
+                <p className="text-muted-foreground">
+                  Your {state.service.toLowerCase()} service has been activated successfully.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-destructive">
+                    Service activation failed: {state.serviceError || 'Unknown error'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Your payment was successful, but there was an issue activating the service.
+                    Please contact support with your transaction hash.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Transaction Details */}
@@ -82,7 +108,10 @@ const Success: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Amount:</span>
-                  <span className="text-foreground font-medium">₦{state.amount.toLocaleString()}</span>
+                  <span className="text-foreground font-medium">
+                    ₦{state.amount.toLocaleString()} 
+                    {state.usdcAmount && `(${state.usdcAmount.toFixed(2)} USDC)`}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Transaction:</span>
