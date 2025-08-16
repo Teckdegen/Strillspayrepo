@@ -83,6 +83,25 @@ const Confirmation = () => {
       // Convert USDC amount to wei (6 decimals for USDC)
       const amountInWei = parseUnits(usdcAmount.totalUsdc.toString(), 6);
       
+      // Navigate to success page with pending state
+      navigate('/success', {
+        state: {
+          status: 'pending',
+          service: state.service,
+          amount: state.amount,
+          recipient: state.recipient,
+          mobileNumber: state.mobileNumber,
+          planId: state.planId,
+          networkId: state.networkId,
+          smartCardNumber: state.smartcard,
+          cableId: state.discoId,
+          usdcAmount: usdcAmount.totalUsdc,
+          nairaAmount: state.amount,
+          exchangeRate
+        }
+      });
+      
+      // Initiate the blockchain transaction
       writeContract({
         address: USDC_CONTRACT_ADDRESS as `0x${string}`,
         abi: USDC_ABI,
