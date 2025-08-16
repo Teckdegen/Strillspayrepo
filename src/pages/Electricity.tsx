@@ -65,9 +65,16 @@ const Electricity = () => {
       <div className="min-h-screen bg-gradient-radial flex items-center justify-center p-6 pt-24">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            Electricity
-          </h1>
+          <div className="flex items-center justify-center mb-6">
+            <img 
+              src="/lovable-uploads/2000af21-4568-4f7c-b886-22080a792f05.png" 
+              alt="Strills Logo" 
+              className="w-12 h-12 mr-3"
+            />
+            <h1 className="text-4xl font-bold text-foreground">
+              Electricity
+            </h1>
+          </div>
           <p className="text-muted-foreground">Top up your electricity meter</p>
         </div>
 
@@ -77,19 +84,46 @@ const Electricity = () => {
               <label className="block text-sm font-medium text-foreground mb-2">
                 Select Provider
               </label>
-              <LitSelect
-                value={providerId}
-                onChange={(e) => setProviderId(e.target.value)}
-                options={[
-                  { value: '', label: 'Choose electricity provider' },
-                  ...ELECTRICITY_PROVIDERS.map((provider) => ({
-                    value: provider.id,
-                    label: provider.name
-                  }))
-                ]}
-              />
+              <div className="relative">
+                <select
+                  value={providerId}
+                  onChange={(e) => setProviderId(e.target.value)}
+                  className="w-full p-4 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent appearance-none cursor-pointer hover:bg-card/80 transition-colors"
+                >
+                  <option value="">Choose electricity provider</option>
+                  {ELECTRICITY_PROVIDERS.map((provider) => (
+                    <option key={provider.id} value={provider.id} className="bg-card text-foreground">
+                      {provider.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
               {errors.providerId && (
                 <p className="text-red-500 text-sm mt-1">{errors.providerId}</p>
+              )}
+              
+              {/* Provider Display */}
+              {providerId && (
+                <div className="mt-3 p-4 bg-gradient-primary rounded-lg border border-primary/20 shadow-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center shadow-glow-primary">
+                      <span className="text-primary-foreground font-bold text-xl">
+                        {selectedProvider?.name.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-primary-foreground font-bold text-lg">
+                        {selectedProvider?.name}
+                      </p>
+                      <p className="text-primary-foreground/80 text-sm">Selected Provider</p>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
 

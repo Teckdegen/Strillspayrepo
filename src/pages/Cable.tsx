@@ -58,9 +58,16 @@ const Cable = () => {
       <div className="min-h-screen bg-gradient-radial flex items-center justify-center p-6 pt-24">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            Cable TV
-          </h1>
+          <div className="flex items-center justify-center mb-6">
+            <img 
+              src="/lovable-uploads/2000af21-4568-4f7c-b886-22080a792f05.png" 
+              alt="Strills Logo" 
+              className="w-12 h-12 mr-3"
+            />
+            <h1 className="text-4xl font-bold text-foreground">
+              Cable TV
+            </h1>
+          </div>
           <p className="text-muted-foreground">Subscribe to your favorite channels</p>
         </div>
 
@@ -70,22 +77,49 @@ const Cable = () => {
               <label className="block text-sm font-medium text-foreground mb-2">
                 Select Decoder
               </label>
-              <LitSelect
-                value={decoder}
-                onChange={(e) => {
-                  setDecoder(e.target.value);
-                  setPlanId(''); // Reset plan when decoder changes
-                }}
-                options={[
-                  { value: '', label: 'Choose decoder' },
-                  ...DECODERS.map((dec) => ({
-                    value: dec.id,
-                    label: dec.decoder
-                  }))
-                ]}
-              />
+              <div className="relative">
+                <select
+                  value={decoder}
+                  onChange={(e) => {
+                    setDecoder(e.target.value);
+                    setPlanId(''); // Reset plan when decoder changes
+                  }}
+                  className="w-full p-4 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent appearance-none cursor-pointer hover:bg-card/80 transition-colors"
+                >
+                  <option value="">Choose decoder</option>
+                  {DECODERS.map((dec) => (
+                    <option key={dec.id} value={dec.id} className="bg-card text-foreground">
+                      {dec.decoder}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
               {errors.decoder && (
                 <p className="text-red-500 text-sm mt-1">{errors.decoder}</p>
+              )}
+              
+              {/* Decoder Display */}
+              {decoder && (
+                <div className="mt-3 p-4 bg-gradient-primary rounded-lg border border-primary/20 shadow-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center shadow-glow-primary">
+                      <span className="text-primary-foreground font-bold text-xl">
+                        {selectedDecoderData?.decoder.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-primary-foreground font-bold text-lg">
+                        {selectedDecoderData?.decoder}
+                      </p>
+                      <p className="text-primary-foreground/80 text-sm">Selected Decoder</p>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
 

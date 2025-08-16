@@ -78,7 +78,7 @@ const Airtime: React.FC = () => {
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center mb-6">
             <img 
-              src="/lovable-uploads/53059c35-18e1-42b0-b269-b56c3e9848a8.png" 
+              src="/lovable-uploads/2000af21-4568-4f7c-b886-22080a792f05.png" 
               alt="Strills Logo" 
               className="w-12 h-12 mr-3"
             />

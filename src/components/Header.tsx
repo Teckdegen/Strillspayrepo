@@ -29,9 +29,11 @@ export const Header: React.FC = () => {
               className="flex items-center space-x-3 cursor-pointer" 
               onClick={() => navigate('/')}
             >
-              <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow-primary">
-                <Zap className="w-6 h-6 text-primary-foreground" />
-              </div>
+              <img 
+                src="/lovable-uploads/2000af21-4568-4f7c-b886-22080a792f05.png" 
+                alt="Strills Logo" 
+                className="w-10 h-10 rounded-xl shadow-glow-primary"
+              />
               <h1 className="text-2xl font-bold text-foreground">Strills</h1>
             </div>
           </div>
