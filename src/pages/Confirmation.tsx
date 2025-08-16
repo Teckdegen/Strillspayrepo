@@ -8,7 +8,7 @@ import { LitCard } from '../components/LitCard';
 import { LitButton } from '../components/LitButton';
 import { fetchExchangeRate, convertNairaToUSDC } from '../constants';
 import { USDC_CONTRACT_ADDRESS, TREASURY_ADDRESS, USDC_ABI, sonicMainnet } from '../config/wagmi';
-import { processAfterBlockchainConfirmation } from '../services/transactionService';
+import { processServiceTransaction } from '../services/transactionService';
 
 interface ConfirmationState {
   service: string;
@@ -16,12 +16,20 @@ interface ConfirmationState {
   plan?: { name: string; amount: number };
   recipient: string;
   mobileNumber?: string;
+  phone?: string; // Alias for mobileNumber
   amount: number;
   planId?: string;
+  plan_id?: string; // Alias for planId
   networkId?: string;
+  network_id?: string; // Alias for networkId
   discoId?: string;
+  cable_id?: string; // Alias for discoId
   meterNumber?: string;
   smartcard?: string;
+  smart_card_number?: string; // Alias for smartcard
+  usdcAmount?: number;
+  nairaAmount?: number;
+  exchangeRate?: number;
 }
 
 const Confirmation = () => {
@@ -40,6 +48,16 @@ const Confirmation = () => {
   const [processing, setProcessing] = useState(false);
 
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
+  
+  // Normalize the data from location state
+  const normalizedState = React.useMemo(() => ({
+    ...state,
+    mobileNumber: state.mobileNumber || state.recipient,
+    networkId: state.networkId || state.network_id,
+    smartcard: state.smartcard || state.smart_card_number,
+    cableId: state.cableId || state.cable_id,
+    planId: state.planId || state.plan_id,
+  }), [state]);
   
   const { writeContract, error } = useWriteContract({
     mutation: {
@@ -100,6 +118,11 @@ const Confirmation = () => {
     }
   }, [state, navigate]);
 
+  useEffect(() => {
+    console.log('Confirmation state:', state);
+    console.log('Normalized state:', normalizedState);
+  }, [state, normalizedState]);
+
   const handleConfirm = async () => {
     if (!isConnected || !address) {
       toast.error('Please connect your wallet first');
@@ -120,15 +143,21 @@ const Confirmation = () => {
       // Show loading toast
       const toastId = toast.loading('Processing transaction...');
       
-      // Initiate the blockchain transaction
-      writeContract({
+      // Prepare transaction data
+      const txData = {
         address: USDC_CONTRACT_ADDRESS as `0x${string}`,
         abi: USDC_ABI,
         functionName: 'transfer',
         args: [TREASURY_ADDRESS as `0x${string}`, amountInWei],
         account: address,
         chain: sonicMainnet,
-      });
+      };
+      
+      // Log the transaction data for debugging
+      console.log('Initiating transaction with data:', txData);
+      
+      // Initiate the blockchain transaction
+      writeContract(txData);
       
       // Update toast when transaction is submitted
       if (transactionHash) {
@@ -143,62 +172,80 @@ const Confirmation = () => {
   };
 
   useEffect(() => {
-    if (isConfirmed && hash) {
-      toast.loading('Processing your transaction...');
-      
-      // Prepare service data based on the service type
-      const serviceData = {
-        service: state.service,
-        network_id: state.network_id || state.networkId,
-        phone: state.phone || state.mobileNumber,
-        amount: state.amount?.toString(),
-        plan_id: state.plan_id || state.planId,
-        smart_card_number: state.smartcard || state.smart_card_number,
-        cable_id: state.cable_id || state.discoId,
-      };
+    if (!isConfirmed || !transactionHash || !state) return;
 
-      // Process the service after blockchain confirmation
-      const processService = async () => {
-        try {
-          const result = await processAfterBlockchainConfirmation(hash, serviceData);
-          
-          if (result.success) {
-            toast.dismiss();
-            toast.success('Service processed successfully!');
-            
-            // Navigate to success page with transaction details
-            navigate('/success', {
-              state: {
-                ...state,
-                txHash: hash,
-                usdcAmount: usdcAmount.totalUsdc,
-                serviceProcessed: true,
-              },
-            });
-          } else {
-            throw new Error(result.error || 'Failed to process service');
-          }
-        } catch (error: any) {
-          console.error('Service processing error:', error);
-          toast.dismiss();
-          toast.error(`Service processing failed: ${error.message}`);
-          
-          // Still navigate to success page but with error state
-          navigate('/success', {
-            state: {
-              ...state,
-              txHash: hash,
-              usdcAmount: usdcAmount.totalUsdc,
-              serviceProcessed: false,
-              serviceError: error.message,
-            },
-          });
-        }
-      };
+    const processService = async () => {
+      try {
+        // Prepare service data with proper typing
+        const serviceData = {
+          service: state.service as 'airtime' | 'data' | 'cable' | 'electricity',
+          network_id: state.networkId || state.network_id || '',
+          phone: (state.mobileNumber || state.phone || '').toString(),
+          amount: state.amount.toString(),
+          plan_id: (state.planId || state.plan_id || '').toString(),
+          smart_card_number: (state.smartcard || state.smart_card_number || '').toString(),
+          cable_id: (state.discoId || state.cable_id || '').toString(),
+        };
 
-      processService();
-    }
-  }, [isConfirmed, hash, navigate, state, usdcAmount.totalUsdc]);
+        // Log the service data for debugging
+        console.log('Processing service with data:', serviceData);
+
+        // Process the service
+        const result = await processServiceTransaction(serviceData);
+        
+        // Navigate to success page with all necessary data
+        const successState = {
+          status: 'completed' as const,
+          service: state.service,
+          provider: state.provider,
+          amount: state.amount,
+          recipient: state.recipient,
+          mobileNumber: state.mobileNumber || state.phone,
+          planId: state.planId || state.plan_id,
+          networkId: state.networkId || state.network_id,
+          smartCardNumber: state.smartcard || state.smart_card_number,
+          cableId: state.discoId || state.cable_id,
+          usdcAmount: usdcAmount.totalUsdc,
+          nairaAmount: state.amount,
+          exchangeRate,
+          transactionHash,
+          serviceProcessed: true,
+        };
+
+        console.log('Navigating to success with state:', successState);
+        navigate('/success', { state: successState });
+      } catch (error) {
+        console.error('Failed to process service:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        toast.error(`Service processing failed: ${errorMessage}`);
+        
+        // Navigate to success page with error state
+        const errorState = {
+          status: 'failed' as const,
+          service: state.service,
+          provider: state.provider,
+          amount: state.amount,
+          recipient: state.recipient,
+          mobileNumber: state.mobileNumber || state.phone,
+          planId: state.planId || state.plan_id,
+          networkId: state.networkId || state.network_id,
+          smartCardNumber: state.smartcard || state.smart_card_number,
+          cableId: state.discoId || state.cable_id,
+          usdcAmount: usdcAmount.totalUsdc,
+          nairaAmount: state.amount,
+          exchangeRate,
+          transactionHash,
+          serviceProcessed: false,
+          serviceError: errorMessage,
+        };
+
+        console.error('Navigating to success with error state:', errorState);
+        navigate('/success', { state: errorState });
+      }
+    };
+
+    processService();
+  }, [isConfirmed, transactionHash, state, navigate, usdcAmount.totalUsdc, exchangeRate]);
 
   useEffect(() => {
     if (error) {
