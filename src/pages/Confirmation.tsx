@@ -39,10 +39,44 @@ const Confirmation = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
-  const { writeContract, data: hash, error } = useWriteContract();
+  const [transactionHash, setTransactionHash] = useState<string | null>(null);
+  
+  const { writeContract, error } = useWriteContract({
+    mutation: {
+      onSuccess: (hash) => {
+        setTransactionHash(hash);
+      },
+      onError: (error) => {
+        console.error('Transaction error:', error);
+        toast.error('Transaction failed. Please try again.');
+        setProcessing(false);
+      }
+    }
+  });
+  
   const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ 
-    hash,
-    chainId: sonicMainnet.id 
+    hash: transactionHash as `0x${string}`,
+    chainId: sonicMainnet.id,
+    onSuccess: () => {
+      // Only navigate to success page after transaction is confirmed
+      navigate('/success', {
+        state: {
+          status: 'completed',
+          service: state.service,
+          amount: state.amount,
+          recipient: state.recipient,
+          mobileNumber: state.mobileNumber,
+          planId: state.planId,
+          networkId: state.networkId,
+          smartCardNumber: state.smartcard,
+          cableId: state.discoId,
+          usdcAmount: usdcAmount.totalUsdc,
+          nairaAmount: state.amount,
+          exchangeRate,
+          transactionHash
+        }
+      });
+    }
   });
 
   useEffect(() => {
@@ -83,23 +117,8 @@ const Confirmation = () => {
       // Convert USDC amount to wei (6 decimals for USDC)
       const amountInWei = parseUnits(usdcAmount.totalUsdc.toString(), 6);
       
-      // Navigate to success page with pending state
-      navigate('/success', {
-        state: {
-          status: 'pending',
-          service: state.service,
-          amount: state.amount,
-          recipient: state.recipient,
-          mobileNumber: state.mobileNumber,
-          planId: state.planId,
-          networkId: state.networkId,
-          smartCardNumber: state.smartcard,
-          cableId: state.discoId,
-          usdcAmount: usdcAmount.totalUsdc,
-          nairaAmount: state.amount,
-          exchangeRate
-        }
-      });
+      // Show loading toast
+      const toastId = toast.loading('Processing transaction...');
       
       // Initiate the blockchain transaction
       writeContract({
@@ -110,6 +129,12 @@ const Confirmation = () => {
         account: address,
         chain: sonicMainnet,
       });
+      
+      // Update toast when transaction is submitted
+      if (transactionHash) {
+        toast.loading('Waiting for confirmation...', { id: toastId });
+      }
+      
     } catch (err) {
       console.error('Transaction failed:', err);
       toast.error('Transaction failed. Please try again.');
