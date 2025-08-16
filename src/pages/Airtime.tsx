@@ -77,7 +77,11 @@ const Airtime: React.FC = () => {
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center mb-6">
-            <Smartphone className="w-12 h-12 text-primary mr-3" />
+            <img 
+              src="/lovable-uploads/53059c35-18e1-42b0-b269-b56c3e9848a8.png" 
+              alt="Strills Logo" 
+              className="w-12 h-12 mr-3"
+            />
             <h1 className="text-4xl font-extrabold text-foreground">
               Airtime
             </h1>
@@ -89,16 +93,50 @@ const Airtime: React.FC = () => {
 
         {/* Form */}
         <LitCard className="space-y-6">
-          <LitSelect
-            label="Network"
-            value={formData.network}
-            onChange={(e) => handleInputChange('network', e.target.value)}
-            options={[
-              { value: '', label: 'Select Network' },
-              ...networkOptions
-            ]}
-            error={errors.network}
-          />
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Network</label>
+            <div className="relative">
+              <select
+                value={formData.network}
+                onChange={(e) => handleInputChange('network', e.target.value)}
+                className="w-full p-4 bg-card border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-transparent appearance-none cursor-pointer"
+              >
+                <option value="">Select Network</option>
+                {NETWORKS.map((network) => (
+                  <option key={network.network_id} value={network.network_id} className="bg-card text-foreground">
+                    {network.name}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+            {errors.network && (
+              <p className="text-sm text-destructive">{errors.network}</p>
+            )}
+            
+            {/* Network Display */}
+            {formData.network && (
+              <div className="mt-3 p-3 bg-gradient-primary rounded-lg border border-primary/20">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                    <span className="text-primary font-bold text-lg">
+                      {NETWORKS.find(n => n.network_id === formData.network)?.name.charAt(0)}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-primary-foreground font-semibold">
+                      {NETWORKS.find(n => n.network_id === formData.network)?.name}
+                    </p>
+                    <p className="text-primary-foreground/80 text-sm">Selected Network</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           <LitInput
             label="Phone Number"
