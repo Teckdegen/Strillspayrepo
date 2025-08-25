@@ -1,21 +1,21 @@
 // Sonic Mainnet Configuration
 export const sonicMainnet = {
-  id: 11155111,
+  id: 146,
   name: 'Sonic',
   nativeCurrency: {
     decimals: 18,
-    name: 'ETHH',
-    symbol: 'ETH',
+    name: 'Sonic',
+    symbol: 'S',
   },
   rpcUrls: {
     default: {
-      http: ['https://rpc.sepolia.org'],
+      http: ['https://rpc.soniclabs.com'],
     },
   },
   blockExplorers: {
     default: {
       name: 'Sonic Explorer',
-      url: 'https://sonicscan.org/',
+      url: 'https://sonicscan.org',
     },
   },
 };
