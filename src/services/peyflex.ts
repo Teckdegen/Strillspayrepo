@@ -88,24 +88,85 @@ const makeRequest = async <T>(
   }
 };
 
+// Network mapping to standardize network identifiers
+const NETWORK_MAPPING: Record<string, string> = {
+  'mtn': 'MTN',
+  'glo': 'GLO',
+  'airtel': 'AIRTEL',
+  '9mobile': '9MOBILE',
+  'etisalat': '9MOBILE',
+  '9 mobile': '9MOBILE'
+};
+
 // Airtime Endpoints
 export const purchaseAirtime = async (data: {
   network: string;
   amount: number | string;
   mobile_number: string;
 }) => {
-  // Format the request data according to the API requirements
-  const requestData = {
-    network: data.network.toLowerCase(),
-    amount: String(data.amount), // Ensure amount is a string
-    mobile_number: data.mobile_number.replace(/\D/g, '').replace(/^234/, '0'),
-    bypass: 'false',
-    agentId: '0',
-    agentReference: `ref-${Date.now()}`
-  };
+  try {
+    // Validate and normalize network
+    const network = data.network.trim().toLowerCase();
+    const networkId = NETWORK_MAPPING[network] || network.toUpperCase();
+    
+    // Format phone number (ensure it's in the correct format)
+    const formattedPhone = data.mobile_number.replace(/\D/g, '');
+    if (!formattedPhone) {
+      throw new Error('Invalid phone number');
+    }
+    
+    // Ensure amount is a valid number
+    const amount = Number(data.amount);
+    if (isNaN(amount) || amount <= 0) {
+      throw new Error('Invalid amount. Please enter a valid positive number.');
+    }
 
-  console.log('Purchase Airtime Request:', requestData);
-  return makeRequest('POST', '/airtime/topup/', requestData);
+    // Prepare request data according to API requirements
+    const requestData = {
+      network: networkId,
+      amount: amount.toString(),
+      mobile_number: formattedPhone.startsWith('0') ? formattedPhone : `0${formattedPhone}`,
+      bypass: 'false',
+      agentId: '0',
+      agentReference: `ref-${Date.now()}`,
+      // Additional required fields
+      service_type: 'AIRTIME',
+      payment_method: 'wallet',
+      request_type: 'PURCHASE',
+      product_id: `${networkId}_AIRTIME`,
+      product_name: `${networkId} Airtime Recharge`,
+      customer_reference: `CUST-${Date.now()}`
+    };
+
+    console.log('Purchase Airtime Request:', JSON.stringify(requestData, null, 2));
+    
+    const response = await makeRequest('POST', '/airtime/topup/', requestData);
+    
+    // Log the response for debugging
+    console.log('Airtime Purchase Response:', JSON.stringify(response, null, 2));
+    
+    // Check for specific error conditions in the response
+    if (response.status === 'failed') {
+      throw new Error(response.message || 'Airtime purchase failed');
+    }
+    
+    return response;
+    
+  } catch (error: any) {
+    console.error('Airtime Purchase Error:', {
+      error: error.message,
+      requestData: data,
+      response: error.response?.data
+    });
+    
+    // Provide more user-friendly error messages
+    if (error.message.includes('Product / Identifier Not Active') || 
+        error.message.includes('Invalid')) {
+      throw new Error('The selected network or amount is currently unavailable. Please try a different network or amount.');
+    }
+    
+    throw error;
+  }
 };
 
 // Data Endpoints
