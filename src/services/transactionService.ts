@@ -1,22 +1,18 @@
 import { toast } from 'sonner';
-import { sendAirtime, purchaseData, validateCable, setApiKey } from './easytopup';
-
-// Set the API key directly
-const EASYTOPUP_API_KEY = '84d5c7717d131cf2b5b2c6b1fbcace33';
-setApiKey(EASYTOPUP_API_KEY);
+import { purchaseAirtime, purchaseData, purchaseCable, purchaseElectricity } from './peyflex';
 
 type ServiceType = 'airtime' | 'data' | 'cable' | 'electricity';
 
 interface TransactionData {
   service: ServiceType;
-  network_id: string;
-  phone?: string;
+  network: string;
+  phone: string;
   amount?: string;
-  plan_id?: string;
-  smart_card_number?: string;
-  cable_id?: string;
-  // Additional fields for other services
-  [key: string]: any;
+  plan?: string;
+  iuc?: string;
+  provider?: string;
+  meter?: string;
+  type?: string;
 }
 
 export const processServiceTransaction = async (data: TransactionData) => {
@@ -27,48 +23,60 @@ export const processServiceTransaction = async (data: TransactionData) => {
 
     switch (service) {
       case 'airtime':
-        if (!rest.phone || !rest.amount || !rest.network_id) {
+        if (!rest.phone || !rest.amount || !rest.network) {
           throw new Error('Missing required fields for airtime transaction');
         }
-        result = await sendAirtime({
-          network_id: rest.network_id,
+        result = await purchaseAirtime({
+          network: rest.network,
           phone: rest.phone,
           amount: rest.amount,
         });
         break;
 
       case 'data':
-        if (!rest.phone || !rest.plan_id || !rest.network_id) {
+        if (!rest.phone || !rest.plan || !rest.network) {
           throw new Error('Missing required fields for data purchase');
         }
         result = await purchaseData({
           phone: rest.phone,
-          plan_id: rest.plan_id,
-          network_id: rest.network_id,
+          plan: rest.plan,
+          network: rest.network,
         });
         break;
 
       case 'cable':
-        if (!rest.cable_id || !rest.smart_card_number) {
-          throw new Error('Missing required fields for cable validation');
+        if (!rest.provider || !rest.iuc || !rest.plan || !rest.phone) {
+          throw new Error('Missing required fields for cable subscription');
         }
-        result = await validateCable({
-          cable_id: rest.cable_id,
-          smart_card_number: rest.smart_card_number,
+        result = await purchaseCable({
+          provider: rest.provider,
+          iuc: rest.iuc,
+          plan: rest.plan,
+          phone: rest.phone,
         });
         break;
 
       case 'electricity':
-        // Implement electricity service if needed
-        throw new Error('Electricity service not yet implemented');
+        if (!rest.meter || !rest.plan || !rest.amount || !rest.type || !rest.phone) {
+          throw new Error('Missing required fields for electricity payment');
+        }
+        result = await purchaseElectricity({
+          meter: rest.meter,
+          plan: rest.plan,
+          amount: rest.amount,
+          type: rest.type,
+          phone: rest.phone,
+        });
+        break;
 
       default:
         throw new Error(`Unsupported service type: ${service}`);
     }
 
-    if (result.status === 'success') {
+    // Peyflex API response structure
+    if (result.status === 'success' || result.status === true) {
       toast.success(result.message || 'Transaction successful');
-      return { success: true, data: result.data };
+      return { success: true, data: result.data, transactionId: result.id };
     } else {
       throw new Error(result.message || 'Transaction failed');
     }

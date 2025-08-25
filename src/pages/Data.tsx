@@ -161,7 +161,7 @@ const Data: React.FC = () => {
             <LitSelect
               label="Data Plan"
               value={formData.plan}
-              onChange={(e) => handleInputChange('plan', e.target.value)}
+              onChange={(e) => handleInputChange('plan', (e.target as HTMLSelectElement).value)}
               options={[
                 { value: '', label: 'Select Plan' },
                 ...planOptions

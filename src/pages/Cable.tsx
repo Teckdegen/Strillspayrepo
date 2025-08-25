@@ -129,7 +129,7 @@ const Cable = () => {
               </label>
               <LitSelect
                 value={planId}
-                onChange={(e) => setPlanId(e.target.value)}
+                onChange={(e) => setPlanId((e.target as HTMLSelectElement).value)}
                 disabled={!decoder}
                 options={[
                   { value: '', label: 'Choose plan' },

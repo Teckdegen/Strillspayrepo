@@ -39,7 +39,6 @@ const Success: React.FC = () => {
   // Watch for transaction confirmation if we have a hash
   const { isSuccess: isTransactionConfirmed } = useWaitForTransactionReceipt({
     hash: state.transactionHash as `0x${string}`,
-    enabled: !!state.transactionHash && state.status === 'pending',
   });
 
   // Handle service processing when transaction is confirmed
@@ -58,13 +57,13 @@ const Success: React.FC = () => {
 
     try {
       const serviceData = {
-        service: state.service,
-        network_id: state.networkId,
-        phone: state.mobileNumber,
+        service: state.service as 'airtime' | 'data' | 'cable' | 'electricity',
+        network: state.networkId || state.provider || '',
+        phone: state.mobileNumber || '',
         amount: state.amount.toString(),
-        plan_id: state.planId,
-        smart_card_number: state.smartCardNumber,
-        cable_id: state.cableId,
+        plan: state.planId || '',
+        iuc: state.smartCardNumber || '',
+        provider: state.provider || state.cableId || '',
       };
 
       const result = await processServiceTransaction(serviceData);
@@ -74,7 +73,7 @@ const Success: React.FC = () => {
           ...prev,
           status: 'completed',
           serviceProcessed: true,
-          transactionHash: result.transactionId || prev.transactionHash,
+          transactionHash: (result as any).transactionId || prev.transactionHash,
         }));
       } else {
         throw new Error(result.error || 'Failed to process service');
@@ -269,7 +268,7 @@ const Success: React.FC = () => {
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 w-full">
               <LitButton
-                variant="outline"
+                variant="secondary"
                 className="w-full"
                 onClick={() => navigate('/')}
                 disabled={isProcessing}

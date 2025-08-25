@@ -55,7 +55,7 @@ const Confirmation = () => {
     mobileNumber: state.mobileNumber || state.recipient,
     networkId: state.networkId || state.network_id,
     smartcard: state.smartcard || state.smart_card_number,
-    cableId: state.cableId || state.cable_id,
+    cableId: state.discoId || state.cable_id,
     planId: state.planId || state.plan_id,
   }), [state]);
   
@@ -75,26 +75,6 @@ const Confirmation = () => {
   const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ 
     hash: transactionHash as `0x${string}`,
     chainId: sonicMainnet.id,
-    onSuccess: () => {
-      // Only navigate to success page after transaction is confirmed
-      navigate('/success', {
-        state: {
-          status: 'completed',
-          service: state.service,
-          amount: state.amount,
-          recipient: state.recipient,
-          mobileNumber: state.mobileNumber,
-          planId: state.planId,
-          networkId: state.networkId,
-          smartCardNumber: state.smartcard,
-          cableId: state.discoId,
-          usdcAmount: usdcAmount.totalUsdc,
-          nairaAmount: state.amount,
-          exchangeRate,
-          transactionHash
-        }
-      });
-    }
   });
 
   useEffect(() => {
@@ -176,15 +156,17 @@ const Confirmation = () => {
 
     const processService = async () => {
       try {
-        // Prepare service data with proper typing
+        // Prepare service data with proper typing for Peyflex
         const serviceData = {
           service: state.service as 'airtime' | 'data' | 'cable' | 'electricity',
-          network_id: state.networkId || state.network_id || '',
+          network: state.networkId || state.network_id || state.provider || '',
           phone: (state.mobileNumber || state.phone || '').toString(),
           amount: state.amount.toString(),
-          plan_id: (state.planId || state.plan_id || '').toString(),
-          smart_card_number: (state.smartcard || state.smart_card_number || '').toString(),
-          cable_id: (state.discoId || state.cable_id || '').toString(),
+          plan: (state.planId || state.plan_id || '').toString(),
+          iuc: (state.smartcard || state.smart_card_number || '').toString(),
+          provider: state.provider || state.discoId || state.cable_id || '',
+          meter: (state.meterNumber || '').toString(),
+          type: state.service === 'electricity' ? 'prepaid' : undefined,
         };
 
         // Log the service data for debugging
