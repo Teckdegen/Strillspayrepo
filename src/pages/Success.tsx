@@ -59,6 +59,7 @@ const Success: React.FC = () => {
     setState(prev => ({ ...prev, status: 'processing' }));
 
     try {
+      // Prepare service data
       const serviceData: TransactionData = {
         service: state.service.toLowerCase() as 'airtime' | 'data' | 'cable' | 'electricity',
         reference: state.transactionHash,
@@ -68,29 +69,42 @@ const Success: React.FC = () => {
         network: state.networkId || state.provider || '',
         iuc: state.smartCardNumber || '',
         provider: state.provider || state.cableId || '',
-        meter: state.recipient, // For electricity
-        type: 'prepaid' // Default for electricity
+        meter: state.recipient,
+        type: 'prepaid'
       };
 
+      console.log('Processing service with data:', serviceData);
+      
+      // Show processing toast
+      const toastId = toast.loading('Processing your transaction...');
+      
+      // Process the service
       const result = await processAfterBlockchainConfirmation(state.transactionHash, serviceData);
       
-      setState(prev => ({
-        ...prev,
+      console.log('Service processing result:', result);
+      
+      // Update state based on result
+      const newState = {
         status: result.status === 'success' ? 'completed' : 'failed',
         serviceProcessed: result.status === 'success',
         serviceError: result.status === 'failed' ? result.message : undefined,
         message: result.message,
         reference: result.reference
-      }));
+      };
+      
+      setState(prev => ({ ...prev, ...newState }));
 
+      // Update toast based on result
       if (result.status === 'success') {
-        toast.success('Transaction completed successfully!');
+        toast.success('Transaction completed successfully!', { id: toastId });
       } else {
-        toast.error(result.message || 'Failed to process service');
+        toast.error(result.message || 'Failed to process service', { id: toastId });
       }
+      
     } catch (error) {
       console.error('Service processing error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
       setState(prev => ({
         ...prev,
         status: 'failed',
@@ -98,6 +112,7 @@ const Success: React.FC = () => {
         serviceError: errorMessage,
         message: errorMessage
       }));
+      
       toast.error('Service processing failed. Please contact support.');
     } finally {
       setIsProcessing(false);
