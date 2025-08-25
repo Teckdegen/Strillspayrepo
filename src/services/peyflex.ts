@@ -39,23 +39,52 @@ const makeRequest = async <T>(
       url: `${BASE_URL}${endpoint}`,
       headers: {
         'Content-Type': 'application/json',
-        ...(requireAuth && { 'Authorization': `Token ${API_KEY}` })
+        'Authorization': `Token ${API_KEY}`
       },
-      timeout: REQUEST_TIMEOUT
+      timeout: REQUEST_TIMEOUT,
+      validateStatus: () => true // This ensures we don't throw on HTTP error status
     };
 
     if (method === 'POST') {
       config.data = data;
     } else if (data) {
-      // For GET requests, add params
       config.params = data;
     }
 
+    console.log('Making request to:', config.url, 'with data:', data);
     const response = await axios(config);
+    
+    // Log the full response for debugging
+    console.log('API Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data,
+      headers: response.headers
+    });
+
+    // Handle non-2xx responses
+    if (response.status < 200 || response.status >= 300) {
+      const errorMessage = response.data?.message || 
+                         response.data?.error || 
+                         `Request failed with status ${response.status}`;
+      throw new Error(errorMessage);
+    }
+
     return response.data;
   } catch (error: any) {
-    console.error('API Error:', error.response?.data || error.message);
-    throw error;
+    console.error('API Error:', {
+      message: error.message,
+      response: error.response?.data,
+      config: error.config
+    });
+    
+    // Extract error message from different possible locations
+    const errorMessage = error.response?.data?.message || 
+                        error.response?.data?.error || 
+                        error.message || 
+                        'An unknown error occurred';
+    
+    throw new Error(errorMessage);
   }
 };
 
@@ -65,11 +94,18 @@ export const purchaseAirtime = async (data: {
   amount: number | string;
   mobile_number: string;
 }) => {
-  return makeRequest('POST', '/airtime/topup/', {
+  // Format the request data according to the API requirements
+  const requestData = {
     network: data.network.toLowerCase(),
-    amount: data.amount,
-    mobile_number: data.mobile_number
-  });
+    amount: String(data.amount), // Ensure amount is a string
+    mobile_number: data.mobile_number.replace(/\D/g, '').replace(/^234/, '0'),
+    bypass: 'false',
+    agentId: '0',
+    agentReference: `ref-${Date.now()}`
+  };
+
+  console.log('Purchase Airtime Request:', requestData);
+  return makeRequest('POST', '/airtime/topup/', requestData);
 };
 
 // Data Endpoints
