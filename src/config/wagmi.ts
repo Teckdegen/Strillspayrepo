@@ -4,8 +4,8 @@ export const sonicMainnet = {
   name: 'Sonic',
   nativeCurrency: {
     decimals: 18,
-    name: 'Sonic',
-    symbol: 'S',
+    name: 'Sepolia',
+    symbol: 'ETH',
   },
   rpcUrls: {
     default: {
