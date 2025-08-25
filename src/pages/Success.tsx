@@ -37,7 +37,7 @@ const Success: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Watch for transaction confirmation if we have a hash
-  const { isSuccess: isTransactionConfirmed } = useWaitForTransactionReceipt({
+  const { isSuccess: isTransactionConfirmed, isLoading: isWaitingForConfirmation } = useWaitForTransactionReceipt({
     hash: state.transactionHash as `0x${string}`,
   });
 
@@ -130,18 +130,26 @@ const Success: React.FC = () => {
               {state.status === 'pending' && (
                 <>
                   <h1 className="text-3xl font-bold text-foreground">
-                    Waiting for confirmation...
+                    {isWaitingForConfirmation ? 'Confirming Payment...' : 'Payment Submitted'}
                   </h1>
-                  <div className="space-y-2">
-                    <p className="text-muted-foreground">
-                      Waiting for transaction to be confirmed on the blockchain...
-                    </p>
-                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-primary rounded-full animate-pulse w-1/3"></div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center space-x-2">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      <p className="text-muted-foreground">
+                        {isWaitingForConfirmation 
+                          ? 'Waiting for blockchain confirmation...' 
+                          : 'Transaction submitted to Sonic network'
+                        }
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      This may take a few moments
-                    </p>
+                    <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-primary to-secondary rounded-full animate-pulse w-1/3"></div>
+                    </div>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                      <p className="text-blue-800 dark:text-blue-200 text-sm">
+                        💡 Your payment is being processed on the Sonic blockchain. Service activation will begin once confirmed.
+                      </p>
+                    </div>
                   </div>
                 </>
               )}
@@ -149,17 +157,22 @@ const Success: React.FC = () => {
               {state.status === 'processing' && (
                 <>
                   <h1 className="text-3xl font-bold text-foreground">
-                    Processing your {state.service.toLowerCase()}...
+                    Activating your {state.service.toLowerCase()}...
                   </h1>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-center space-x-2">
                       <Loader2 className="h-5 w-5 animate-spin text-primary" />
                       <p className="text-muted-foreground">
-                        Activating your {state.service.toLowerCase()} service
+                        Processing {state.service.toLowerCase()} with {state.provider}
                       </p>
                     </div>
-                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-primary rounded-full animate-pulse w-2/3"></div>
+                    <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-primary via-secondary to-primary rounded-full animate-pulse w-2/3"></div>
+                    </div>
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                      <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+                        ⚡ Payment confirmed! Now activating your service with {state.provider}...
+                      </p>
                     </div>
                   </div>
                 </>
@@ -173,6 +186,11 @@ const Success: React.FC = () => {
                   <p className="text-muted-foreground">
                     Your {state.service.toLowerCase()} service has been activated successfully.
                   </p>
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <p className="text-green-800 dark:text-green-200 text-sm font-medium">
+                      ✅ Service activation complete! You should receive a confirmation SMS shortly.
+                    </p>
+                  </div>
                 </>
               )}
 
@@ -196,7 +214,7 @@ const Success: React.FC = () => {
             </div>
 
             {/* Transaction Details */}
-            <div className="bg-card/50 rounded-xl p-6 space-y-4 text-left">
+            <div className="bg-card/50 rounded-xl p-6 space-y-4 text-left border border-border/50">
               <div className="flex items-center space-x-3 mb-4">
                 <Receipt className="w-5 h-5 text-primary" />
                 <h3 className="text-lg font-semibold text-foreground">Transaction Details</h3>
@@ -204,38 +222,11 @@ const Success: React.FC = () => {
               
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                <span className="text-muted-foreground">Service:</span>
-                <span className="text-foreground font-medium capitalize">
-                  {state.service.toLowerCase()}
-                </span>
-              </div>
-              {state.mobileNumber && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Phone Number:</span>
-                  <span className="text-foreground font-medium">{state.mobileNumber}</span>
-                </div>
-              )}
-              {state.amount && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Amount:</span>
-                  <span className="text-foreground font-medium">
-                    ₦{state.amount.toLocaleString()} (${state.usdcAmount?.toFixed(2)} USDC)
+                  <span className="text-muted-foreground">Service:</span>
+                  <span className="text-foreground font-medium capitalize">
+                    {state.service.toLowerCase()}
                   </span>
                 </div>
-              )}
-              {state.transactionHash && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Transaction:</span>
-                  <a 
-                    href={`https://sonicscan.io/tx/${state.transactionHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline font-medium"
-                  >
-                    View on Explorer
-                  </a>
-                </div>
-              )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Provider:</span>
                   <span className="text-foreground font-medium">{state.provider}</span>
@@ -244,24 +235,56 @@ const Success: React.FC = () => {
                   <span className="text-muted-foreground">Recipient:</span>
                   <span className="text-foreground font-medium">{state.recipient}</span>
                 </div>
+                {state.mobileNumber && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Phone Number:</span>
+                    <span className="text-foreground font-medium">{state.mobileNumber}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Amount:</span>
                   <span className="text-foreground font-medium">
                     ₦{state.amount.toLocaleString()} 
-                    {state.usdcAmount && `(${state.usdcAmount.toFixed(2)} USDC)`}
+                    {state.usdcAmount && ` (${state.usdcAmount.toFixed(2)} USDC)`}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Transaction:</span>
-                  <a 
-                    href={`https://sonicscan.org/tx/${state.transactionHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:text-primary/80 font-medium truncate max-w-32"
-                  >
-                    {state.transactionHash.slice(0, 8)}...{state.transactionHash.slice(-6)}
-                  </a>
-                </div>
+                {state.exchangeRate && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Exchange Rate:</span>
+                    <span className="text-foreground font-medium">₦{state.exchangeRate.toLocaleString()}/USDC</span>
+                  </div>
+                )}
+                {state.transactionHash && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Transaction:</span>
+                    <a 
+                      href={`https://sonicscan.org/tx/${state.transactionHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary/80 font-medium"
+                    >
+                      {state.transactionHash.slice(0, 8)}...{state.transactionHash.slice(-6)}
+                    </a>
+                  </div>
+                )}
+                {state.status === 'completed' && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Status:</span>
+                    <div className="flex items-center space-x-1">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span className="text-green-500 font-medium">Service Activated</span>
+                    </div>
+                  </div>
+                )}
+                {state.status === 'failed' && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Status:</span>
+                    <div className="flex items-center space-x-1">
+                      <AlertCircle className="w-4 h-4 text-destructive" />
+                      <span className="text-destructive font-medium">Service Failed</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

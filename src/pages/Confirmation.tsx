@@ -154,79 +154,28 @@ const Confirmation = () => {
   useEffect(() => {
     if (!isConfirmed || !transactionHash || !state) return;
 
-    const processService = async () => {
-      try {
-        // Prepare service data with proper typing for Peyflex
-        const serviceData = {
-          service: state.service as 'airtime' | 'data' | 'cable' | 'electricity',
-          network: state.networkId || state.network_id || state.provider || '',
-          phone: (state.mobileNumber || state.phone || '').toString(),
-          amount: state.amount.toString(),
-          plan: (state.planId || state.plan_id || '').toString(),
-          iuc: (state.smartcard || state.smart_card_number || '').toString(),
-          provider: state.provider || state.discoId || state.cable_id || '',
-          meter: (state.meterNumber || '').toString(),
-          type: state.service === 'electricity' ? 'prepaid' : undefined,
-        };
-
-        // Log the service data for debugging
-        console.log('Processing service with data:', serviceData);
-
-        // Process the service
-        const result = await processServiceTransaction(serviceData);
-        
-        // Navigate to success page with all necessary data
-        const successState = {
-          status: 'completed' as const,
-          service: state.service,
-          provider: state.provider,
-          amount: state.amount,
-          recipient: state.recipient,
-          mobileNumber: state.mobileNumber || state.phone,
-          planId: state.planId || state.plan_id,
-          networkId: state.networkId || state.network_id,
-          smartCardNumber: state.smartcard || state.smart_card_number,
-          cableId: state.discoId || state.cable_id,
-          usdcAmount: usdcAmount.totalUsdc,
-          nairaAmount: state.amount,
-          exchangeRate,
-          transactionHash,
-          serviceProcessed: true,
-        };
-
-        console.log('Navigating to success with state:', successState);
-        navigate('/success', { state: successState });
-      } catch (error) {
-        console.error('Failed to process service:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        toast.error(`Service processing failed: ${errorMessage}`);
-        
-        // Navigate to success page with error state
-        const errorState = {
-          status: 'failed' as const,
-          service: state.service,
-          provider: state.provider,
-          amount: state.amount,
-          recipient: state.recipient,
-          mobileNumber: state.mobileNumber || state.phone,
-          planId: state.planId || state.plan_id,
-          networkId: state.networkId || state.network_id,
-          smartCardNumber: state.smartcard || state.smart_card_number,
-          cableId: state.discoId || state.cable_id,
-          usdcAmount: usdcAmount.totalUsdc,
-          nairaAmount: state.amount,
-          exchangeRate,
-          transactionHash,
-          serviceProcessed: false,
-          serviceError: errorMessage,
-        };
-
-        console.error('Navigating to success with error state:', errorState);
-        navigate('/success', { state: errorState });
-      }
+    // Navigate to success page immediately with pending status
+    // The Success page will handle the service processing
+    const pendingState = {
+      status: 'pending' as const,
+      service: state.service,
+      provider: state.provider,
+      amount: state.amount,
+      recipient: state.recipient,
+      mobileNumber: state.mobileNumber || state.phone,
+      planId: state.planId || state.plan_id,
+      networkId: state.networkId || state.network_id,
+      smartCardNumber: state.smartcard || state.smart_card_number,
+      cableId: state.discoId || state.cable_id,
+      usdcAmount: usdcAmount.totalUsdc,
+      nairaAmount: state.amount,
+      exchangeRate,
+      transactionHash,
+      serviceProcessed: false,
     };
 
-    processService();
+    console.log('Transaction confirmed, navigating to success with pending state:', pendingState);
+    navigate('/success', { state: pendingState });
   }, [isConfirmed, transactionHash, state, navigate, usdcAmount.totalUsdc, exchangeRate]);
 
   useEffect(() => {
