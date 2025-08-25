@@ -170,7 +170,7 @@ export const getDataNetworks = async () => {
 export const getDataPlans = async (network: string) => {
   return makeRequest({
     method: 'GET',
-    url: `/api/data/plans/?network=${network}`
+    url: `/api/data/plans/?network=${network.toLowerCase()}`
   });
 };
 
@@ -201,7 +201,7 @@ export const getCableProviders = async () => {
 export const getCablePlans = async (provider: string) => {
   return makeRequest({
     method: 'GET',
-    url: `/api/cable/plans/?provider=${provider}`
+    url: `/api/cable/plans/?provider=${provider.toLowerCase()}`
   });
 };
 
