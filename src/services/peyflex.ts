@@ -218,84 +218,133 @@ const makeRequest = async <T>(
   });
 };
 
-// Update the processTransaction function
+// Transaction processing with enhanced error handling
 export const processTransaction = async (
   type: 'airtime' | 'data' | 'cable' | 'electricity',
   data: any,
   reference: string
 ): Promise<TransactionResponse> => {
-  const serviceType = type;
-  
   try {
     // Input validation
-    if (!validServiceTypes.has(type)) {
-      throw new Error(`Invalid service type: ${type}`);
+    if (!reference || !validateReference(reference)) {
+      return formatErrorResponse(
+        new Error('Invalid or missing transaction reference'),
+        reference,
+        type,
+        'Transaction reference is required and must be a non-empty string'
+      );
     }
-    
-    if (!validateReference(reference)) {
-      throw new Error('A valid transaction reference is required');
+
+    // Check for duplicate transaction
+    if (processedTransactions.has(reference)) {
+      return formatErrorResponse(
+        new Error('Duplicate transaction detected'),
+        reference,
+        type,
+        'This transaction has already been processed'
+      );
     }
-    
-    const transactionData = { ...data, reference };
-    validateTransactionData(transactionData, type);
-    
-    // Process based on transaction type
+
+    // Mark this reference as processed
+    processedTransactions.add(reference);
+
+    // Validate input data
+    const validationError = validateTransactionData(data, type);
+    if (validationError) {
+      return formatErrorResponse(
+        new Error(validationError),
+        reference,
+        type,
+        'Invalid transaction data'
+      );
+    }
+
+    // Prepare request based on transaction type
     let endpoint = '';
+    let requestData: any = { ...data };
+
     switch (type) {
       case 'airtime':
-        endpoint = '/api/airtime/subscribe/';
+        endpoint = '/airtime';
+        requestData = {
+          network: data.network,
+          phone: data.phone,
+          amount: data.amount,
+          reference
+        };
         break;
+
       case 'data':
-        endpoint = '/api/data/subscribe/';
+        endpoint = '/data';
+        requestData = {
+          network: data.network,
+          plan: data.plan,
+          phone: data.phone,
+          reference
+        };
         break;
+
       case 'cable':
-        endpoint = '/api/cable/subscribe/';
+        endpoint = '/cable';
+        requestData = {
+          provider: data.provider,
+          iuc: data.iuc,
+          plan: data.plan,
+          phone: data.phone,
+          reference
+        };
         break;
+
       case 'electricity':
-        endpoint = '/api/electricity/subscribe/';
-        transactionData.identifier = 'electricity';
+        endpoint = '/electricity';
+        requestData = {
+          meter: data.meter,
+          plan: data.plan,
+          amount: data.amount,
+          type: data.type,
+          phone: data.phone,
+          reference
+        };
         break;
+
+      default:
+        return formatErrorResponse(
+          new Error('Invalid service type'),
+          reference,
+          type,
+          'Unsupported service type'
+        );
     }
-    
+
     // Make the API request
     const response = await makeRequest({
       method: 'POST',
       url: endpoint,
-      data: transactionData,
+      data: requestData
     });
-    
-    // Check if the API indicates failure
-    if (response.status === 'failed') {
+
+    // Format the response
+    if (response.status === 'success') {
+      return formatSuccessResponse(
+        response.data || {},
+        reference,
+        type,
+        response.message || 'Transaction processed successfully'
+      );
+    } else {
       return formatErrorResponse(
         new Error(response.message || 'Transaction failed'),
         reference,
-        serviceType,
-        response.message || 'Failed to process payment'
+        type,
+        response.message || 'Failed to process transaction'
       );
     }
-    
-    // Return success response
-    return formatSuccessResponse(
-      response.data || {},
-      reference,
-      serviceType,
-      'Payment processed successfully!'
-    );
-    
   } catch (error) {
-    console.error(`[${new Date().toISOString()}] Transaction Error:`, {
-      type,
-      reference,
-      error: error.message,
-      data
-    });
-    
-    // Format and return error response
     return formatErrorResponse(
       error,
       reference,
-      serviceType,
-      `Failed to process ${serviceType} transaction`
+      type,
+      'An unexpected error occurred while processing the transaction'
     );
   }
 };
@@ -341,45 +390,12 @@ const validateTransactionData = (data: any, type: string) => {
   }
 };
 
-// Transaction processing with enhanced error handling
-export const processTransaction = async (
-  type: 'airtime' | 'data' | 'cable' | 'electricity',
-  data: any,
-  reference: string
-): Promise<TransactionResponse> => {
-  try {
-    // Add reference to transaction data
-    const transactionData = { ...data, reference };
-    
-    // Process based on transaction type
-    switch (type) {
-      case 'airtime':
-        return await purchaseAirtime(transactionData);
-      case 'data':
-        return await purchaseData(transactionData);
-      case 'cable':
-        return await purchaseCable(transactionData);
-      case 'electricity':
-        return await purchaseElectricity(transactionData);
-      default:
-        throw new Error('Invalid transaction type');
-    }
-  } catch (error) {
-    console.error('Transaction processing failed:', error);
-    throw error;
-  }
-};
-
-// Export other utility functions
+// Transaction status check
 export const checkTransactionStatus = async (reference: string) => {
-  if (!validateReference(reference)) {
-    throw new Error('A valid transaction reference is required');
-  }
-  
   return makeRequest({
     method: 'GET',
-    url: `/api/transaction/status/${reference}/`,
-  }, { requireReference: false });
+    url: `/transaction/status/${reference}`
+  });
 };
 
 // User endpoints
@@ -515,13 +531,5 @@ export const purchaseElectricity = async (data: {
       ...data,
       reference: data.reference,
     },
-  });
-};
-
-// Transaction status check
-export const checkTransactionStatus = async (reference: string) => {
-  return makeRequest({
-    method: 'GET',
-    url: `/api/transaction/status/${reference}/`,
   });
 };
