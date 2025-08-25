@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 const BASE_URL = 'https://client.peyflex.com.ng';
 const API_KEY = 'f304ee6fec16077c05ea82ebca89d39b6d575ac8';
@@ -22,117 +22,6 @@ interface PeyflexResponse<T = any> {
   reference?: string;
 }
 
-// Input validation schemas
-const validNetworks = new Set(['mtn', 'airtel', 'glo', '9mobile']);
-const validServiceTypes = new Set(['airtime', 'data', 'cable', 'electricity']);
-
-const validatePhoneNumber = (phone: string): boolean => {
-  const phoneRegex = /^(\+?234|0)[789]\d{9}$/;
-  return phoneRegex.test(phone);
-};
-
-const validateAmount = (amount: string | number): boolean => {
-  const amountNum = Number(amount);
-  return !isNaN(amountNum) && amountNum > 0;
-};
-
-const validateReference = (ref: string): boolean => {
-  return typeof ref === 'string' && ref.length > 0;
-};
-
-// Rate limiting queue processor
-const processQueue = async () => {
-  // If already processing or no items in queue, do nothing
-  if (isProcessing || requestQueue.length === 0) return;
-  
-  isProcessing = true;
-  const nextRequest = requestQueue.shift();
-  
-  if (nextRequest) {
-    try {
-      await nextRequest();
-    } catch (error) {
-      console.error('Error processing request:', error);
-    } finally {
-      // Add delay between requests to respect rate limits
-      await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY));
-      isProcessing = false;
-      // Process next item in queue if any
-      if (requestQueue.length > 0) {
-        processQueue();
-      }
-    }
-  } else {
-    isProcessing = false;
-  }
-};
-
-// Enhanced axios instance with interceptors
-const api = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    'Authorization': `Token ${API_KEY}`,
-    'Content-Type': 'application/json',
-    'X-Request-ID': crypto.randomUUID(),
-  },
-  timeout: REQUEST_TIMEOUT,
-});
-
-// Request interceptor for logging and retry logic
-api.interceptors.request.use(
-  (config) => {
-    console.log(`[${new Date().toISOString()}] Request: ${config.method?.toUpperCase()} ${config.url}`);
-    return config;
-  },
-  (error) => {
-    console.error('Request Error:', error);
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor for error handling and retries
-api.interceptors.response.use(
-  (response) => {
-    console.log(`[${new Date().toISOString()}] Response: ${response.status} ${response.config.url}`);
-    return response;
-  },
-  async (error: AxiosError) => {
-    const config = error.config as any;
-    
-    // Log the error
-    const errorMessage = error.response?.data?.message || error.message;
-    console.error(`[${new Date().toISOString()}] API Error:`, {
-      url: config?.url,
-      status: error.response?.status,
-      message: errorMessage,
-      retryCount: config?.retryCount || 0
-    });
-
-    // If we don't have a config or retry count is exceeded, reject
-    if (!config || config.retryCount >= MAX_RETRIES) {
-      return Promise.reject(new Error(`Max retries exceeded: ${errorMessage}`));
-    }
-
-    // Retry on network errors, 5xx, or rate limiting (429)
-    if (
-      error.code === 'ECONNABORTED' || 
-      !error.response || 
-      error.response.status >= 500 ||
-      error.response.status === 429
-    ) {
-      config.retryCount = (config.retryCount || 0) + 1;
-      const delay = error.response?.status === 429 
-        ? Math.pow(2, config.retryCount) * 1000 // Exponential backoff for rate limits
-        : RETRY_DELAY;
-      
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return api(config);
-    }
-    
-    return Promise.reject(error);
-  }
-);
-
 // Enhanced response interface
 export interface TransactionResponse {
   status: 'success' | 'failed' | 'pending';
@@ -148,38 +37,41 @@ export interface TransactionResponse {
 
 // Helper function to format success response
 const formatSuccessResponse = (
-  data: any, 
-  reference: string, 
+  data: any,
+  reference: string,
   serviceType: string,
   customMessage?: string
 ): TransactionResponse => ({
   status: 'success',
-  message: customMessage || 'Transaction completed successfully',
+  message: customMessage || 'Transaction processed successfully',
   data,
   reference,
   timestamp: new Date().toISOString(),
   serviceType,
-  amount: data.amount,
-  recipient: data.phone || data.iuc || data.meter
+  ...(data.amount && { amount: data.amount }),
+  ...(data.recipient && { recipient: data.recipient })
 });
 
 // Helper function to format error response
 const formatErrorResponse = (
-  error: any, 
-  reference: string, 
+  error: any,
+  reference: string,
   serviceType: string,
   customMessage?: string
 ): TransactionResponse => {
-  const errorMessage = error.response?.data?.message || error.message || 'An unknown error occurred';
+  const errorMessage = error?.response?.data?.message || 
+                      error?.message || 
+                      customMessage || 
+                      'An unexpected error occurred';
   
   return {
     status: 'failed',
-    message: customMessage || `Transaction failed: ${errorMessage}`,
-    code: error.response?.data?.code || error.code || 'UNKNOWN_ERROR',
+    message: errorMessage,
+    code: error?.response?.data?.code || 'UNKNOWN_ERROR',
     reference,
     timestamp: new Date().toISOString(),
     serviceType,
-    data: error.response?.data || {}
+    data: error?.response?.data || { error: errorMessage }
   };
 };
 
@@ -188,42 +80,38 @@ const makeRequest = async <T>(
   config: AxiosRequestConfig,
   options: { requireReference?: boolean } = {}
 ): Promise<PeyflexResponse<T>> => {
-  const { requireReference = true } = options;
-  
-  if (requireReference && !validateReference(config.data?.reference)) {
-    throw new Error('Transaction reference is required');
-  }
-
-  if (requireReference && processedTransactions.has(config.data?.reference)) {
-    throw new Error('This transaction has already been processed');
-  }
-
-  return new Promise((resolve, reject) => {
-    const executeRequest = async () => {
-      try {
-        const response = await api({
-          ...config,
-          retryCount: 0,
-        });
-
-        if (requireReference && response.data?.reference) {
-          processedTransactions.add(response.data.reference);
-        }
-
-        resolve({
-          ...response.data,
-          status: response.data.status || 'success',
-          message: response.data.message || 'Request completed',
-          reference: response.data.reference || config.data?.reference,
-        });
-      } catch (error) {
-        reject(error);
-      }
+  try {
+    // Add API key to headers
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEY}`,
+      ...config.headers
     };
 
-    requestQueue.push(executeRequest);
-    processQueue();
-  });
+    const response = await axios({
+      ...config,
+      headers,
+      timeout: REQUEST_TIMEOUT,
+      baseURL: BASE_URL
+    });
+
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('API Error Response:', error.response.data);
+      throw error;
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('No response received:', error.request);
+      throw new Error('No response from server. Please check your connection.');
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('Request setup error:', error.message);
+      throw error;
+    }
+  }
 };
 
 // Transaction processing with enhanced error handling
@@ -234,19 +122,19 @@ export const processTransaction = async (
 ): Promise<TransactionResponse> => {
   try {
     // Input validation
-    if (!reference || !validateReference(reference)) {
+    if (!reference || typeof reference !== 'string') {
       return formatErrorResponse(
-        new Error('Invalid or missing transaction reference'),
+        new Error('Invalid transaction reference'),
         reference,
         type,
-        'Transaction reference is required and must be a non-empty string'
+        'A valid transaction reference is required'
       );
     }
 
     // Check for duplicate transaction
     if (processedTransactions.has(reference)) {
       return formatErrorResponse(
-        new Error('Duplicate transaction detected'),
+        new Error('Duplicate transaction'),
         reference,
         type,
         'This transaction has already been processed'
@@ -256,24 +144,13 @@ export const processTransaction = async (
     // Mark this reference as processed
     processedTransactions.add(reference);
 
-    // Validate input data
-    const validationError = validateTransactionData(data, type);
-    if (validationError) {
-      return formatErrorResponse(
-        new Error(validationError),
-        reference,
-        type,
-        'Invalid transaction data'
-      );
-    }
-
     // Prepare request based on transaction type
     let endpoint = '';
     let requestData: any = { ...data };
 
     switch (type) {
       case 'airtime':
-        endpoint = '/airtime';
+        endpoint = '/airtime/purchase';
         requestData = {
           network: data.network,
           phone: data.phone,
@@ -283,17 +160,17 @@ export const processTransaction = async (
         break;
 
       case 'data':
-        endpoint = '/data';
+        endpoint = '/data/purchase';
         requestData = {
           network: data.network,
-          plan: data.plan,
           phone: data.phone,
+          plan: data.plan,
           reference
         };
         break;
 
       case 'cable':
-        endpoint = '/cable';
+        endpoint = '/cable/subscribe';
         requestData = {
           provider: data.provider,
           iuc: data.iuc,
@@ -304,7 +181,7 @@ export const processTransaction = async (
         break;
 
       case 'electricity':
-        endpoint = '/electricity';
+        endpoint = '/electricity/pay';
         requestData = {
           meter: data.meter,
           plan: data.plan,
@@ -317,10 +194,10 @@ export const processTransaction = async (
 
       default:
         return formatErrorResponse(
-          new Error('Invalid service type'),
+          new Error('Unsupported service type'),
           reference,
           type,
-          'Unsupported service type'
+          'The requested service is not supported'
         );
     }
 
@@ -331,23 +208,25 @@ export const processTransaction = async (
       data: requestData
     });
 
-    // Format the response
+    // Handle the response
     if (response.status === 'success') {
       return formatSuccessResponse(
-        response.data || {},
+        response.data,
         reference,
         type,
-        response.message || 'Transaction processed successfully'
+        response.message
       );
     } else {
       return formatErrorResponse(
         new Error(response.message || 'Transaction failed'),
         reference,
         type,
-        response.message || 'Failed to process transaction'
+        response.message
       );
     }
-  } catch (error) {
+
+  } catch (error: any) {
+    console.error(`Error in processTransaction (${type}):`, error);
     return formatErrorResponse(
       error,
       reference,
@@ -357,48 +236,7 @@ export const processTransaction = async (
   }
 };
 
-// Helper function to validate transaction data
-const validateTransactionData = (data: any, type: string) => {
-  if (!data) throw new Error('Transaction data is required');
-  
-  // Common validations
-  if (!validatePhoneNumber(data.phone)) {
-    throw new Error('Invalid phone number format');
-  }
-  
-  if (data.amount && !validateAmount(data.amount)) {
-    throw new Error('Invalid amount');
-  }
-  
-  // Type-specific validations
-  switch (type) {
-    case 'airtime':
-      if (!validNetworks.has(data.network?.toLowerCase())) {
-        throw new Error('Invalid network provider');
-      }
-      break;
-      
-    case 'data':
-      if (!data.plan) {
-        throw new Error('Data plan is required');
-      }
-      break;
-      
-    case 'cable':
-      if (!data.iuc || !data.plan) {
-        throw new Error('IUC and plan are required for cable subscription');
-      }
-      break;
-      
-    case 'electricity':
-      if (!data.meter || !data.plan || !data.type) {
-        throw new Error('Meter number, plan, and type are required for electricity payment');
-      }
-      break;
-  }
-};
-
-// Transaction status check
+// Export other service functions
 export const checkTransactionStatus = async (reference: string) => {
   return makeRequest({
     method: 'GET',
@@ -406,138 +244,18 @@ export const checkTransactionStatus = async (reference: string) => {
   });
 };
 
-// User endpoints
-export const getUserProfile = () => {
-  return makeRequest({ method: 'GET', url: '/api/user/profile/' });
-};
-
-export const getWalletBalance = () => {
-  return makeRequest({ method: 'GET', url: '/api/wallet/balance/' });
-};
-
-// Airtime endpoints
-export const getAirtimeNetworks = () => {
-  return makeRequest({ method: 'GET', url: '/api/airtime/networks/' });
-};
-
-export const purchaseAirtime = async (data: {
-  network: string;
-  phone: string;
-  amount: string;
-  reference: string; // Add transaction reference for tracking
-}) => {
-  return makeRequest({
-    method: 'POST',
-    url: '/api/airtime/subscribe/',
-    data: {
-      ...data,
-      reference: data.reference,
-    },
-  });
-};
-
-// Data endpoints
-export const getDataNetworks = () => {
-  return makeRequest({ method: 'GET', url: '/api/data/networks/' });
-};
-
-export const getDataPlans = (network: string) => {
+export const getAirtimeNetworks = async () => {
   return makeRequest({
     method: 'GET',
-    url: `/api/data/plans/?network=${network}`,
+    url: '/airtime/networks'
   });
 };
 
-export const purchaseData = async (data: {
-  network: string;
-  plan: string;
-  phone: string;
-  reference: string;
-}) => {
-  return makeRequest({
-    method: 'POST',
-    url: '/api/data/subscribe/',
-    data: {
-      ...data,
-      reference: data.reference,
-    },
-  });
-};
-
-// Cable TV endpoints
-export const getCableProviders = () => {
-  return makeRequest({ method: 'GET', url: '/api/cable/providers/' });
-};
-
-export const getCablePlans = (provider: string) => {
+export const getDataPlans = async (network: string) => {
   return makeRequest({
     method: 'GET',
-    url: `/api/cable/plans/?provider=${provider}`,
+    url: `/data/plans?network=${network}`
   });
 };
 
-export const verifyCableIUC = async (data: {
-  provider: string;
-  iuc: string;
-}) => {
-  return makeRequest({
-    method: 'POST',
-    url: '/api/cable/verify/',
-    data,
-  });
-};
-
-export const purchaseCable = async (data: {
-  provider: string;
-  iuc: string;
-  plan: string;
-  phone: string;
-  reference: string;
-}) => {
-  return makeRequest({
-    method: 'POST',
-    url: '/api/cable/subscribe/',
-    data: {
-      ...data,
-      reference: data.reference,
-    },
-  });
-};
-
-// Electricity endpoints
-export const getElectricityPlans = () => {
-  return makeRequest({
-    method: 'GET',
-    url: '/api/electricity/plans/?identifier=electricity',
-  });
-};
-
-export const verifyElectricityMeter = async (data: {
-  meter: string;
-  plan: string;
-  type: string;
-}) => {
-  return makeRequest({
-    method: 'GET',
-    url: `/api/electricity/verify/?identifier=electricity&meter=${data.meter}&plan=${data.plan}&type=${data.type}`,
-  });
-};
-
-export const purchaseElectricity = async (data: {
-  meter: string;
-  plan: string;
-  amount: string;
-  type: string;
-  phone: string;
-  reference: string;
-}) => {
-  return makeRequest({
-    method: 'POST',
-    url: '/api/electricity/subscribe/',
-    data: {
-      identifier: 'electricity',
-      ...data,
-      reference: data.reference,
-    },
-  });
-};
+// Add other service functions as needed
