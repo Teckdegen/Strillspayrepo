@@ -17,8 +17,6 @@ import Electricity from './pages/Electricity';
 import Confirmation from './pages/Confirmation';
 import Success from './pages/Success';
 import NotFound from './pages/NotFound';
-import Payment from './pages/Payment';
-import Dashboard from './pages/Dashboard';
 
 // Components
 import { Header } from './components/Header';
@@ -75,8 +73,6 @@ function App() {
                   <Route path="/electricity" element={<Electricity />} />
                   <Route path="/confirm" element={<Confirmation />} />
                   <Route path="/success" element={<Success />} />
-                  <Route path="/payment" element={<Payment />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
