@@ -1,5 +1,12 @@
 import { toast } from 'sonner';
-import { processTransaction } from './peyflex';
+import { 
+  purchaseAirtime, 
+  purchaseData, 
+  subscribeCable, 
+  rechargeElectricity,
+  verifyCableIUC,
+  verifyMeterNumber
+} from './peyflex';
 
 type ServiceType = 'airtime' | 'data' | 'cable' | 'electricity';
 
@@ -12,7 +19,7 @@ export interface TransactionData {
   iuc?: string;
   provider?: string;
   meter?: string;
-  type?: string;
+  type?: 'prepaid' | 'postpaid';
   reference: string;
 }
 
@@ -47,6 +54,31 @@ const validateTransactionData = (data: TransactionData): { valid: boolean; error
     }
   }
 
+  // Service-specific validation
+  switch (data.service) {
+    case 'airtime':
+      if (!data.amount) return { valid: false, error: 'Amount is required for airtime purchase' };
+      if (!data.network) return { valid: false, error: 'Network is required for airtime purchase' };
+      break;
+    
+    case 'data':
+      if (!data.plan) return { valid: false, error: 'Data plan is required' };
+      if (!data.network) return { valid: false, error: 'Network is required for data purchase' };
+      break;
+    
+    case 'cable':
+      if (!data.iuc) return { valid: false, error: 'IUC/Decoder number is required for cable subscription' };
+      if (!data.plan) return { valid: false, error: 'Plan is required for cable subscription' };
+      if (!data.provider) return { valid: false, error: 'Provider is required for cable subscription' };
+      break;
+    
+    case 'electricity':
+      if (!data.meter) return { valid: false, error: 'Meter number is required for electricity payment' };
+      if (!data.plan) return { valid: false, error: 'Plan is required for electricity payment' };
+      if (!data.type) return { valid: false, error: 'Meter type (prepaid/postpaid) is required' };
+      break;
+  }
+
   return { valid: true };
 };
 
@@ -69,21 +101,67 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
     try {
       // Format phone number if needed
       const formattedPhone = rest.phone.startsWith('0') 
-        ? `+234${rest.phone.slice(1)}` 
+        ? `234${rest.phone.slice(1)}` 
+        : rest.phone.startsWith('+234')
+        ? rest.phone.slice(1)
         : rest.phone;
 
-      result = await processTransaction(
-        service as 'airtime' | 'data' | 'cable' | 'electricity',
-        {
-          ...rest,
-          phone: formattedPhone,
-          amount: rest.amount ? String(rest.amount) : undefined
-        },
-        reference
-      );
+      switch (service) {
+        case 'airtime':
+          result = await purchaseAirtime({
+            network: rest.network!,
+            phone: formattedPhone,
+            amount: rest.amount!
+          });
+          break;
+
+        case 'data':
+          result = await purchaseData({
+            network: rest.network!,
+            plan: rest.plan!,
+            phone: formattedPhone
+          });
+          break;
+
+        case 'cable':
+          // First verify IUC if provided
+          if (rest.iuc) {
+            await verifyCableIUC(rest.provider!, rest.iuc);
+          }
+          
+          result = await subscribeCable({
+            provider: rest.provider!,
+            iuc: rest.iuc!,
+            plan: rest.plan!,
+            phone: formattedPhone
+          });
+          break;
+
+        case 'electricity':
+          // Verify meter number first if provided
+          if (rest.meter) {
+            await verifyMeterNumber({
+              meter: rest.meter,
+              plan: rest.plan!,
+              type: rest.type as 'prepaid' | 'postpaid'
+            });
+          }
+          
+          result = await rechargeElectricity({
+            meter: rest.meter!,
+            plan: rest.plan!,
+            amount: rest.amount!,
+            type: rest.type as 'prepaid' | 'postpaid',
+            phone: formattedPhone
+          });
+          break;
+
+        default:
+          throw new Error(`Unsupported service type: ${service}`);
+      }
     } catch (apiError: any) {
       console.error(`API Error for ${service} (${reference}):`, apiError);
-      throw new Error(apiError.response?.data?.message || apiError.message || 'API request failed');
+      throw new Error(apiError.message || 'API request failed');
     }
 
     console.log(`API Response for ${service} (${reference}):`, result);
@@ -96,9 +174,9 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
       success: true,
       message: result.message || 'Transaction processed successfully',
       data: result.data,
-      transactionId: result.data?.transactionId || result.data?.id,
-      reference: result.reference || reference,
-      timestamp: result.timestamp || timestamp,
+      transactionId: result.data?.transactionId || result.data?.transaction_id,
+      reference: result.data?.reference || reference,
+      timestamp: result.data?.timestamp || timestamp,
       status: 'success'
     };
 
