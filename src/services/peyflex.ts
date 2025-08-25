@@ -1,18 +1,10 @@
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosRequestConfig, AxiosError } from 'axios';
 
 const BASE_URL = 'https://client.peyflex.com.ng';
 const API_KEY = 'f304ee6fec16077c05ea82ebca89d39b6d575ac8';
 
 // Configuration
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
-const RATE_LIMIT_DELAY = 500; // ms between requests
 const REQUEST_TIMEOUT = 30000; // 30 seconds
-
-// In-memory store for rate limiting and deduplication
-const requestQueue: Array<() => void> = [];
-let isProcessing = false;
-const processedTransactions = new Set<string>();
 
 interface PeyflexResponse<T = any> {
   status: 'success' | 'failed' | 'pending';
@@ -22,7 +14,6 @@ interface PeyflexResponse<T = any> {
   reference?: string;
 }
 
-// Enhanced response interface
 export interface TransactionResponse {
   status: 'success' | 'failed' | 'pending';
   message: string;
@@ -75,22 +66,28 @@ const formatErrorResponse = (
   };
 };
 
-// Generic request handler with queue management
+// Generic request handler
 const makeRequest = async <T>(
   config: AxiosRequestConfig,
-  options: { requireReference?: boolean } = {}
+  requireAuth: boolean = true
 ): Promise<PeyflexResponse<T>> => {
   try {
-    // Add API key to headers
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${API_KEY}`,
-      ...config.headers
+    // Add headers
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
     };
+
+    // Add auth header if required
+    if (requireAuth) {
+      headers['Authorization'] = `Token ${API_KEY}`;
+    }
 
     const response = await axios({
       ...config,
-      headers,
+      headers: {
+        ...headers,
+        ...config.headers
+      },
       timeout: REQUEST_TIMEOUT,
       baseURL: BASE_URL
     });
@@ -98,164 +95,183 @@ const makeRequest = async <T>(
     return response.data;
   } catch (error: any) {
     if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      console.error('API Error Response:', error.response.data);
-      throw error;
+      // Server responded with a status code outside 2xx
+      return {
+        status: 'failed',
+        message: error.response.data?.message || 'Request failed',
+        code: error.response.data?.code || 'REQUEST_ERROR',
+        data: error.response.data
+      };
     } else if (error.request) {
-      // The request was made but no response was received
-      console.error('No response received:', error.request);
-      throw new Error('No response from server. Please check your connection.');
+      // Request was made but no response received
+      return {
+        status: 'failed',
+        message: 'No response received from server',
+        code: 'NO_RESPONSE'
+      };
     } else {
-      // Something happened in setting up the request that triggered an Error
-      console.error('Request setup error:', error.message);
-      throw error;
+      // Something happened in setting up the request
+      return {
+        status: 'failed',
+        message: error.message || 'Request setup failed',
+        code: 'REQUEST_SETUP_ERROR'
+      };
     }
   }
 };
 
-// Transaction processing with enhanced error handling
-export const processTransaction = async (
-  type: 'airtime' | 'data' | 'cable' | 'electricity',
-  data: any,
-  reference: string
-): Promise<TransactionResponse> => {
-  try {
-    // Input validation
-    if (!reference || typeof reference !== 'string') {
-      return formatErrorResponse(
-        new Error('Invalid transaction reference'),
-        reference,
-        type,
-        'A valid transaction reference is required'
-      );
-    }
-
-    // Check for duplicate transaction
-    if (processedTransactions.has(reference)) {
-      return formatErrorResponse(
-        new Error('Duplicate transaction'),
-        reference,
-        type,
-        'This transaction has already been processed'
-      );
-    }
-
-    // Mark this reference as processed
-    processedTransactions.add(reference);
-
-    // Prepare request based on transaction type
-    let endpoint = '';
-    let requestData: any = { ...data };
-
-    switch (type) {
-      case 'airtime':
-        endpoint = '/airtime/purchase';
-        requestData = {
-          network: data.network,
-          phone: data.phone,
-          amount: data.amount,
-          reference
-        };
-        break;
-
-      case 'data':
-        endpoint = '/data/purchase';
-        requestData = {
-          network: data.network,
-          phone: data.phone,
-          plan: data.plan,
-          reference
-        };
-        break;
-
-      case 'cable':
-        endpoint = '/cable/subscribe';
-        requestData = {
-          provider: data.provider,
-          iuc: data.iuc,
-          plan: data.plan,
-          phone: data.phone,
-          reference
-        };
-        break;
-
-      case 'electricity':
-        endpoint = '/electricity/pay';
-        requestData = {
-          meter: data.meter,
-          plan: data.plan,
-          amount: data.amount,
-          type: data.type,
-          phone: data.phone,
-          reference
-        };
-        break;
-
-      default:
-        return formatErrorResponse(
-          new Error('Unsupported service type'),
-          reference,
-          type,
-          'The requested service is not supported'
-        );
-    }
-
-    // Make the API request
-    const response = await makeRequest({
-      method: 'POST',
-      url: endpoint,
-      data: requestData
-    });
-
-    // Handle the response
-    if (response.status === 'success') {
-      return formatSuccessResponse(
-        response.data,
-        reference,
-        type,
-        response.message
-      );
-    } else {
-      return formatErrorResponse(
-        new Error(response.message || 'Transaction failed'),
-        reference,
-        type,
-        response.message
-      );
-    }
-
-  } catch (error: any) {
-    console.error(`Error in processTransaction (${type}):`, error);
-    return formatErrorResponse(
-      error,
-      reference,
-      type,
-      'An unexpected error occurred while processing the transaction'
-    );
-  }
-};
-
-// Export other service functions
-export const checkTransactionStatus = async (reference: string) => {
+// User Endpoints
+export const getUserProfile = async () => {
   return makeRequest({
     method: 'GET',
-    url: `/transaction/status/${reference}`
+    url: '/api/user/profile/'
   });
 };
 
+export const getWalletBalance = async () => {
+  return makeRequest({
+    method: 'GET',
+    url: '/api/wallet/balance/'
+  });
+};
+
+// Airtime Endpoints
 export const getAirtimeNetworks = async () => {
   return makeRequest({
     method: 'GET',
-    url: '/airtime/networks'
+    url: '/api/airtime/networks/'
+  });
+};
+
+export const purchaseAirtime = async (data: {
+  network: string;
+  phone: string;
+  amount: string | number;
+}) => {
+  return makeRequest({
+    method: 'POST',
+    url: '/api/airtime/subscribe/',
+    data: {
+      network: data.network.toLowerCase(),
+      phone: data.phone,
+      amount: data.amount.toString()
+    }
+  });
+};
+
+// Data Endpoints
+export const getDataNetworks = async () => {
+  return makeRequest({
+    method: 'GET',
+    url: '/api/data/networks/'
   });
 };
 
 export const getDataPlans = async (network: string) => {
   return makeRequest({
     method: 'GET',
-    url: `/data/plans?network=${network}`
+    url: `/api/data/plans/?network=${network}`
   });
 };
 
-// Add other service functions as needed
+export const purchaseData = async (data: {
+  network: string;
+  plan: string;
+  phone: string;
+}) => {
+  return makeRequest({
+    method: 'POST',
+    url: '/api/data/subscribe/',
+    data: {
+      network: data.network.toLowerCase(),
+      plan: data.plan,
+      phone: data.phone
+    }
+  });
+};
+
+// Cable TV Endpoints
+export const getCableProviders = async () => {
+  return makeRequest({
+    method: 'GET',
+    url: '/api/cable/providers/'
+  });
+};
+
+export const getCablePlans = async (provider: string) => {
+  return makeRequest({
+    method: 'GET',
+    url: `/api/cable/plans/?provider=${provider}`
+  });
+};
+
+export const verifyCableIUC = async (provider: string, iuc: string) => {
+  return makeRequest({
+    method: 'POST',
+    url: '/api/cable/verify/',
+    data: {
+      provider: provider.toLowerCase(),
+      iuc
+    }
+  });
+};
+
+export const subscribeCable = async (data: {
+  provider: string;
+  iuc: string;
+  plan: string;
+  phone: string;
+}) => {
+  return makeRequest({
+    method: 'POST',
+    url: '/api/cable/subscribe/',
+    data: {
+      provider: data.provider.toLowerCase(),
+      iuc: data.iuc,
+      plan: data.plan,
+      phone: data.phone
+    }
+  });
+};
+
+// Electricity Endpoints
+export const getElectricityPlans = async () => {
+  return makeRequest({
+    method: 'GET',
+    url: '/api/electricity/plans/?identifier=electricity',
+    requireAuth: false
+  });
+};
+
+export const verifyMeterNumber = async (params: {
+  meter: string;
+  plan: string;
+  type: 'prepaid' | 'postpaid';
+}) => {
+  return makeRequest({
+    method: 'GET',
+    url: `/api/electricity/verify/?identifier=electricity&meter=${params.meter}&plan=${params.plan}&type=${params.type}`,
+    requireAuth: false
+  });
+};
+
+export const rechargeElectricity = async (data: {
+  meter: string;
+  plan: string;
+  amount: string | number;
+  type: 'prepaid' | 'postpaid';
+  phone: string;
+}) => {
+  return makeRequest({
+    method: 'POST',
+    url: '/api/electricity/subscribe/',
+    data: {
+      identifier: 'electricity',
+      meter: data.meter,
+      plan: data.plan,
+      amount: data.amount.toString(),
+      type: data.type,
+      phone: data.phone
+    }
+  });
+};
