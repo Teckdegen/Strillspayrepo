@@ -7,7 +7,7 @@ export interface TransactionData {
   service: ServiceType;
   network?: string;
   phone: string;
-  amount?: string;
+  amount?: string | number;
   plan?: string;
   iuc?: string;
   provider?: string;
@@ -26,18 +26,39 @@ export interface TransactionResult {
   status: 'success' | 'failed' | 'pending';
 }
 
+const validateTransactionData = (data: TransactionData): { valid: boolean; error?: string } => {
+  if (!data) {
+    return { valid: false, error: 'Transaction data is required' };
+  }
+
+  if (!data.reference) {
+    return { valid: false, error: 'Transaction reference is required' };
+  }
+
+  if (!data.service) {
+    return { valid: false, error: 'Service type is required' };
+  }
+
+  // Basic phone number validation
+  if (data.phone) {
+    const phone = String(data.phone).trim();
+    if (!/^(\+?234|0)[789]\d{9}$/.test(phone)) {
+      return { valid: false, error: 'Invalid phone number format' };
+    }
+  }
+
+  return { valid: true };
+};
+
 export const processServiceTransaction = async (data: TransactionData): Promise<TransactionResult> => {
   const { service, reference, ...rest } = data;
   const timestamp = new Date().toISOString();
 
   try {
     // Input validation
-    if (!reference) {
-      throw new Error('Transaction reference is required');
-    }
-
-    if (!service) {
-      throw new Error('Service type is required');
+    const validation = validateTransactionData(data);
+    if (!validation.valid) {
+      throw new Error(validation.error);
     }
 
     console.log(`Processing ${service} transaction with reference: ${reference}`, data);
@@ -46,11 +67,17 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
     let result;
     
     try {
+      // Format phone number if needed
+      const formattedPhone = rest.phone.startsWith('0') 
+        ? `+234${rest.phone.slice(1)}` 
+        : rest.phone;
+
       result = await processTransaction(
         service as 'airtime' | 'data' | 'cable' | 'electricity',
         {
           ...rest,
-          phone: rest.phone.startsWith('0') ? `+234${rest.phone.slice(1)}` : rest.phone
+          phone: formattedPhone,
+          amount: rest.amount ? String(rest.amount) : undefined
         },
         reference
       );
@@ -121,7 +148,7 @@ export const processAfterBlockchainConfirmation = async (
       reference: txHash // Using transaction hash as reference
     });
 
-    console.log(`Service processing result for ${txHash}:`, result);
+    console.log('Service processing result for', txHash, ':', result);
     
     if (!result.success) {
       throw new Error(result.message || 'Service processing failed');
@@ -130,7 +157,7 @@ export const processAfterBlockchainConfirmation = async (
     return {
       ...result,
       status: 'success',
-      timestamp,
+      timestamp: result.timestamp || timestamp,
       reference: txHash
     };
 
