@@ -9,7 +9,7 @@ export const sonicMainnet = {
   },
   rpcUrls: {
     default: {
-      http: ['https://rpc.sepolia.org'],
+      http: ['https://eth-sepolia.public.blastapi.io'],
     },
   },
   blockExplorers: {
