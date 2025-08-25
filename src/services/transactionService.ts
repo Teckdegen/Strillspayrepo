@@ -31,17 +31,33 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
   const timestamp = new Date().toISOString();
 
   try {
-    // Basic validation
+    // Input validation
     if (!reference) {
       throw new Error('Transaction reference is required');
     }
 
-    let result: TransactionResponse;
+    if (!service) {
+      throw new Error('Service type is required');
+    }
 
+    console.log(`Processing ${service} transaction with reference: ${reference}`);
+
+    let result: TransactionResponse;
+    const requestData: any = { ...rest };
+
+    // Common validation for all services
+    if (!rest.phone || !/^\+?[0-9]{10,14}$/.test(rest.phone)) {
+      throw new Error('Valid phone number is required');
+    }
+
+    // Process based on service type
     switch (service) {
       case 'airtime':
-        if (!rest.phone || !rest.amount || !rest.network) {
-          throw new Error('Missing required fields for airtime transaction');
+        if (!rest.amount || isNaN(Number(rest.amount)) || Number(rest.amount) <= 0) {
+          throw new Error('Valid amount is required for airtime transaction');
+        }
+        if (!rest.network) {
+          throw new Error('Network is required for airtime transaction');
         }
         result = await processTransaction('airtime', {
           phone: rest.phone,
@@ -51,8 +67,11 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
         break;
 
       case 'data':
-        if (!rest.phone || !rest.plan || !rest.network) {
-          throw new Error('Missing required fields for data purchase');
+        if (!rest.plan) {
+          throw new Error('Data plan is required');
+        }
+        if (!rest.network) {
+          throw new Error('Network is required for data purchase');
         }
         result = await processTransaction('data', {
           phone: rest.phone,
@@ -62,8 +81,14 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
         break;
 
       case 'cable':
-        if (!rest.provider || !rest.iuc || !rest.plan || !rest.phone) {
-          throw new Error('Missing required fields for cable subscription');
+        if (!rest.provider) {
+          throw new Error('Cable provider is required');
+        }
+        if (!rest.iuc) {
+          throw new Error('Smart card/IUC number is required');
+        }
+        if (!rest.plan) {
+          throw new Error('Cable plan is required');
         }
         result = await processTransaction('cable', {
           provider: rest.provider,
@@ -74,8 +99,17 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
         break;
 
       case 'electricity':
-        if (!rest.meter || !rest.plan || !rest.amount || !rest.type || !rest.phone) {
-          throw new Error('Missing required fields for electricity payment');
+        if (!rest.meter) {
+          throw new Error('Meter number is required');
+        }
+        if (!rest.amount || isNaN(Number(rest.amount)) || Number(rest.amount) <= 0) {
+          throw new Error('Valid amount is required for electricity payment');
+        }
+        if (!rest.plan) {
+          throw new Error('Electricity plan is required');
+        }
+        if (!rest.type) {
+          throw new Error('Meter type (prepaid/postpaid) is required');
         }
         result = await processTransaction('electricity', {
           meter: rest.meter,
@@ -90,16 +124,23 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
         throw new Error(`Unsupported service type: ${service}`);
     }
 
+    // Log successful API response
+    console.log(`API Response for ${service} (${reference}):`, result);
+
     // Handle response
     const response: TransactionResult = {
       success: result.status === 'success',
-      message: result.message,
+      message: result.message || 'Transaction processed successfully',
       data: result.data,
       transactionId: result.data?.transactionId || result.data?.id,
       reference: result.reference || reference,
       timestamp: result.timestamp || timestamp,
-      status: result.status
+      status: result.status === 'success' ? 'success' : 'failed'
     };
+
+    if (!response.success) {
+      console.error(`Transaction failed: ${response.message}`, response);
+    }
 
     // Show toast notification
     if (response.success) {
@@ -111,9 +152,11 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
     return response;
 
   } catch (error: any) {
-    console.error('Transaction error:', error);
+    console.error(`Error processing ${data.service} transaction:`, error);
     
-    const errorMessage = error.response?.data?.message || error.message || 'Failed to process transaction';
+    const errorMessage = error?.response?.data?.message || 
+                        error?.message || 
+                        'Failed to process transaction';
     
     // Show error toast
     toast.error(errorMessage);
@@ -121,10 +164,14 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
     return {
       success: false,
       message: errorMessage,
-      reference,
+      reference: reference || 'unknown',
       timestamp,
       status: 'failed',
-      data: error.response?.data || {}
+      data: {
+        error: errorMessage,
+        service: data.service,
+        ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+      }
     };
   }
 };
@@ -134,30 +181,53 @@ export const processAfterBlockchainConfirmation = async (
   txHash: string,
   serviceData: TransactionData
 ): Promise<TransactionResult> => {
+  const timestamp = new Date().toISOString();
+  
   try {
-    // 1. Verify the blockchain transaction
-    if (!txHash) {
-      throw new Error('Transaction hash is required');
+    // 1. Verify the transaction hash
+    if (!txHash || typeof txHash !== 'string' || txHash.length !== 66) {
+      throw new Error('Invalid transaction hash');
     }
 
+    console.log(`Processing service for transaction: ${txHash}`);
+    
     // 2. Process the service transaction
     const result = await processServiceTransaction({
       ...serviceData,
       reference: txHash // Using transaction hash as reference
     });
 
-    return result;
+    console.log(`Service processing result for ${txHash}:`, result);
+    
+    if (!result.success) {
+      throw new Error(result.message || 'Service processing failed');
+    }
+
+    return {
+      ...result,
+      status: 'success',
+      timestamp,
+      reference: txHash
+    };
 
   } catch (error: any) {
-    console.error('Error in processAfterBlockchainConfirmation:', error);
+    console.error(`Error processing transaction ${txHash}:`, error);
+    
+    // Extract error message from different error formats
+    const errorMessage = error?.response?.data?.message || 
+                        error?.message || 
+                        'Failed to process transaction after blockchain confirmation';
     
     return {
       success: false,
-      message: error.message || 'Failed to process transaction after blockchain confirmation',
+      message: errorMessage,
       reference: txHash,
-      timestamp: new Date().toISOString(),
+      timestamp,
       status: 'failed',
-      data: { error: error.toString() }
+      data: {
+        error: errorMessage,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      }
     };
   }
 };
