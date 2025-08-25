@@ -1,6 +1,6 @@
 // Sonic Mainnet Configuration
 export const sonicMainnet = {
-  id: 146,
+  id: 11155111,
   name: 'Sonic',
   nativeCurrency: {
     decimals: 18,
@@ -9,7 +9,7 @@ export const sonicMainnet = {
   },
   rpcUrls: {
     default: {
-      http: ['https://rpc.soniclabs.com'],
+      http: ['https://rpc.sepolia.org'],
     },
   },
   blockExplorers: {
