@@ -4,8 +4,8 @@ import {
   purchaseData, 
   subscribeCable, 
   rechargeElectricity,
-  verifyCableIUC,
-  verifyMeterNumber
+  getServices,
+  getPlans
 } from './peyflex';
 
 type ServiceType = 'airtime' | 'data' | 'cable' | 'electricity';
@@ -32,6 +32,23 @@ export interface TransactionResult {
   timestamp: string;
   status: 'success' | 'failed' | 'pending';
 }
+
+// Get available services or plans
+export const fetchServiceData = async (type: 'services' | 'plans', serviceType?: ServiceType, id?: string) => {
+  try {
+    if (type === 'services') {
+      return await getServices(serviceType!);
+    } else if (type === 'plans' && serviceType && id) {
+      if (serviceType === 'data' || serviceType === 'cable') {
+        return await getPlans(serviceType, id);
+      }
+    }
+    throw new Error('Invalid service type or missing parameters');
+  } catch (error: any) {
+    console.error(`Error fetching ${type}:`, error);
+    throw new Error(error.message || `Failed to fetch ${type}`);
+  }
+};
 
 const validateTransactionData = (data: TransactionData): { valid: boolean; error?: string } => {
   if (!data) {
@@ -99,12 +116,8 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
     let result;
     
     try {
-      // Format phone number if needed
-      const formattedPhone = rest.phone.startsWith('0') 
-        ? `234${rest.phone.slice(1)}` 
-        : rest.phone.startsWith('+234')
-        ? rest.phone.slice(1)
-        : rest.phone;
+      // Format phone number (remove any non-digit characters and ensure it starts with 0)
+      const formattedPhone = rest.phone.replace(/\D/g, '').replace(/^234/, '0');
 
       // Ensure network/provider is lowercase
       const network = rest.network?.toLowerCase();
@@ -114,8 +127,8 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
         case 'airtime':
           result = await purchaseAirtime({
             network: network!,
-            phone: formattedPhone,
-            amount: rest.amount!
+            amount: Number(rest.amount),
+            mobile_number: formattedPhone
           });
           break;
 
@@ -123,40 +136,26 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
           result = await purchaseData({
             network: network!,
             plan: rest.plan!,
-            phone: formattedPhone
+            mobile_number: formattedPhone
           });
           break;
 
         case 'cable':
-          // First verify IUC if provided
-          if (rest.iuc) {
-            await verifyCableIUC(provider!, rest.iuc);
-          }
-          
           result = await subscribeCable({
             provider: provider!,
             iuc: rest.iuc!,
             plan: rest.plan!,
-            phone: formattedPhone
+            mobile_number: formattedPhone
           });
           break;
 
         case 'electricity':
-          // Verify meter number first if provided
-          if (rest.meter) {
-            await verifyMeterNumber({
-              meter: rest.meter,
-              plan: rest.plan!,
-              type: rest.type as 'prepaid' | 'postpaid'
-            });
-          }
-          
           result = await rechargeElectricity({
             meter: rest.meter!,
             plan: rest.plan!,
-            amount: rest.amount!,
-            type: rest.type as 'prepaid' | 'postpaid',
-            phone: formattedPhone
+            amount: Number(rest.amount),
+            type: rest.type!,
+            mobile_number: formattedPhone
           });
           break;
 
@@ -165,7 +164,7 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
       }
     } catch (apiError: any) {
       console.error(`API Error for ${service} (${reference}):`, apiError);
-      throw new Error(apiError.message || 'API request failed');
+      throw new Error(apiError.response?.data?.message || apiError.message || 'API request failed');
     }
 
     console.log(`API Response for ${service} (${reference}):`, result);
@@ -178,9 +177,9 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
       success: true,
       message: result.message || 'Transaction processed successfully',
       data: result.data,
-      transactionId: result.data?.transactionId || result.data?.transaction_id,
-      reference: result.data?.reference || reference,
-      timestamp: result.data?.timestamp || timestamp,
+      transactionId: result.data?.transaction_id || result.reference,
+      reference: result.reference || reference,
+      timestamp: result.timestamp || timestamp,
       status: 'success'
     };
 
