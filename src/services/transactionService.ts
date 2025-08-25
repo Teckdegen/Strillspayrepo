@@ -99,15 +99,57 @@ const validateTransactionData = (data: TransactionData): { valid: boolean; error
   return { valid: true };
 };
 
+// Network validation and mapping
+const validateAndMapNetwork = (network: string, service: ServiceType): string => {
+  if (!network) {
+    throw new Error(`Network is required for ${service} service`);
+  }
+
+  const networkLower = network.toLowerCase().trim();
+  
+  // Network validation based on service type
+  switch (service) {
+    case 'airtime':
+      const validNetworks = ['mtn', 'glo', 'airtel', '9mobile', 'etisalat'];
+      if (!validNetworks.includes(networkLower)) {
+        throw new Error(`Invalid network. Supported networks: ${validNetworks.join(', ')}`);
+      }
+      return networkLower;
+      
+    case 'data':
+      const validDataNetworks = ['mtn', 'glo', 'airtel', '9mobile'];
+      if (!validDataNetworks.includes(networkLower)) {
+        throw new Error(`Invalid data network. Supported networks: ${validDataNetworks.join(', ')}`);
+      }
+      return networkLower;
+      
+    case 'cable':
+      const validCableProviders = ['dstv', 'gotv', 'startimes'];
+      if (!validCableProviders.includes(networkLower)) {
+        throw new Error(`Invalid cable provider. Supported providers: ${validCableProviders.join(', ')}`);
+      }
+      return networkLower;
+      
+    case 'electricity':
+      const validDiscos = ['ikeja', 'eko', 'kano', 'ph', 'ibadan', 'jos', 'kaduna', 'abuja', 'benin', 'portharcourt'];
+      if (!validDiscos.includes(networkLower)) {
+        throw new Error(`Invalid electricity provider. Supported providers: ${validDiscos.join(', ')}`);
+      }
+      return networkLower;
+      
+    default:
+      return networkLower;
+  }
+};
+
 export const processServiceTransaction = async (data: TransactionData): Promise<TransactionResult> => {
   const { service, reference, ...rest } = data;
   const timestamp = new Date().toISOString();
 
   try {
     // Input validation
-    const validation = validateTransactionData(data);
-    if (!validation.valid) {
-      throw new Error(validation.error);
+    if (!service) {
+      throw new Error('Service type is required');
     }
 
     console.log(`Processing ${service} transaction with reference: ${reference}`, data);
@@ -118,43 +160,59 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
     try {
       // Format phone number (remove any non-digit characters and ensure it starts with 0)
       const formattedPhone = rest.phone.replace(/\D/g, '').replace(/^234/, '0');
-
-      // Ensure network/provider is lowercase
-      const network = rest.network?.toLowerCase();
-      const provider = rest.provider?.toLowerCase();
-
+      
+      // Validate and normalize network/provider
+      const network = rest.network ? validateAndMapNetwork(rest.network, service) : undefined;
+      
       switch (service) {
         case 'airtime':
+          if (!network) throw new Error('Network is required for airtime purchase');
+          if (!rest.amount) throw new Error('Amount is required for airtime purchase');
+          
           result = await purchaseAirtime({
-            network: network!,
+            network,
             amount: Number(rest.amount),
             mobile_number: formattedPhone
           });
           break;
 
         case 'data':
+          if (!network) throw new Error('Network is required for data purchase');
+          if (!rest.plan) throw new Error('Data plan is required');
+          
           result = await purchaseData({
-            network: network!,
-            plan: rest.plan!,
+            network,
+            plan: rest.plan,
             mobile_number: formattedPhone
           });
           break;
 
         case 'cable':
+          const provider = rest.provider ? validateAndMapNetwork(rest.provider, service) : undefined;
+          if (!provider) throw new Error('Provider is required for cable subscription');
+          if (!rest.iuc) throw new Error('IUC number is required');
+          if (!rest.plan) throw new Error('Plan is required');
+          
           result = await subscribeCable({
-            provider: provider!,
-            iuc: rest.iuc!,
-            plan: rest.plan!,
+            provider,
+            iuc: rest.iuc,
+            plan: rest.plan,
             mobile_number: formattedPhone
           });
           break;
 
         case 'electricity':
+          const disco = rest.network ? validateAndMapNetwork(rest.network, service) : undefined;
+          if (!disco) throw new Error('Electricity provider is required');
+          if (!rest.meter) throw new Error('Meter number is required');
+          if (!rest.plan) throw new Error('Plan is required');
+          if (!rest.amount) throw new Error('Amount is required');
+          
           result = await rechargeElectricity({
-            meter: rest.meter!,
-            plan: rest.plan!,
+            meter: rest.meter,
+            plan: rest.plan,
             amount: Number(rest.amount),
-            type: rest.type!,
+            type: rest.type || 'prepaid',
             mobile_number: formattedPhone
           });
           break;
@@ -164,7 +222,7 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
       }
     } catch (apiError: any) {
       console.error(`API Error for ${service} (${reference}):`, apiError);
-      throw new Error(apiError.response?.data?.message || apiError.message || 'API request failed');
+      throw new Error(apiError.message || 'API request failed');
     }
 
     console.log(`API Response for ${service} (${reference}):`, result);
@@ -184,7 +242,7 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
     };
 
   } catch (error: any) {
-    console.error(`Error processing ${data.service} transaction:`, error);
+    console.error(`Error processing ${service} transaction:`, error);
     
     const errorMessage = error?.response?.data?.message || 
                        error?.message || 
@@ -198,12 +256,7 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
       message: errorMessage,
       reference: reference || 'unknown',
       timestamp,
-      status: 'failed',
-      data: {
-        error: errorMessage,
-        service: data.service,
-        ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
-      }
+      status: 'failed'
     };
   }
 };
