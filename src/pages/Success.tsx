@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { processAfterBlockchainConfirmation } from '../services/transactionService';
 import { toast } from 'sonner';
 
@@ -16,36 +16,57 @@ interface TransactionData {
   timestamp?: string;
 }
 
-const Success: React.FC = () => {
+export default function Success() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const [transaction, setTransaction] = useState<TransactionData | null>(null);
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Try to get transaction data from location state first (if coming from payment flow)
+    const stateData = location.state as TransactionData | undefined;
+    
+    // Then try to get from URL params
     const txHash = searchParams.get('txHash');
     const txData = searchParams.get('txData');
 
-    if (!txHash || !txData) {
-      setError('Invalid transaction data');
+    if (stateData) {
+      // If we have state data, use that
+      setTransaction(stateData);
+      if (stateData.status === 'pending' && txHash) {
+        processTransaction(stateData, txHash);
+      } else {
+        setIsProcessing(false);
+      }
+    } else if (txHash && txData) {
+      // Otherwise try to parse from URL params
+      try {
+        const parsedData = JSON.parse(decodeURIComponent(txData));
+        setTransaction(parsedData);
+        processTransaction(parsedData, txHash);
+      } catch (err) {
+        console.error('Error parsing transaction data:', err);
+        setError('Invalid transaction data');
+        setIsProcessing(false);
+      }
+    } else {
+      // No valid data found
+      setError('No transaction data found');
       setIsProcessing(false);
-      return;
     }
 
-    try {
-      const tx: TransactionData = JSON.parse(decodeURIComponent(txData));
-      setTransaction(tx);
-      processTransaction(tx, txHash);
-    } catch (err) {
-      console.error('Error parsing transaction data:', err);
-      setError('Failed to parse transaction data');
-      setIsProcessing(false);
-    }
-  }, [searchParams]);
+    // Clean up function to handle component unmount
+    return () => {
+      // Any cleanup if needed
+    };
+  }, [searchParams, location.state]);
 
   const processTransaction = async (txData: TransactionData, txHash: string) => {
     try {
+      setIsProcessing(true);
+      
       // Update to processing state
       setTransaction(prev => ({
         ...prev!,
@@ -77,7 +98,7 @@ const Success: React.FC = () => {
         ...prev!,
         status: 'success',
         message: result.message,
-        timestamp: result.timestamp
+        timestamp: result.timestamp || new Date().toISOString()
       }));
 
       toast.success('Transaction completed successfully');
@@ -99,6 +120,11 @@ const Success: React.FC = () => {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleBackToHome = () => {
+    // Clear any transaction state when going back to home
+    navigate('/', { replace: true, state: null });
   };
 
   const renderStatus = () => {
@@ -142,23 +168,19 @@ const Success: React.FC = () => {
         <div className={`p-4 rounded-lg ${status.color} mb-6 text-left`}>
           <div className="grid grid-cols-2 gap-2">
             <div>Service:</div>
-            <div className="font-medium">{transaction.service}</div>
+            <div className="font-medium capitalize">{transaction.service}</div>
             
             <div>Provider:</div>
             <div className="font-medium">{transaction.provider}</div>
             
             <div>Amount:</div>
-            <div className="font-medium">₦{transaction.amount.toLocaleString()}</div>
+            <div className="font-medium">₦{transaction.amount?.toLocaleString()}</div>
             
             <div>Recipient:</div>
             <div className="font-medium">{transaction.recipient}</div>
             
-            {transaction.reference && (
-              <>
-                <div>Reference:</div>
-                <div className="font-mono text-sm break-all">{transaction.reference}</div>
-              </>
-            )}
+            <div>Reference:</div>
+            <div className="font-mono text-sm break-all">{transaction.reference}</div>
             
             {transaction.timestamp && (
               <>
@@ -171,10 +193,10 @@ const Success: React.FC = () => {
         
         <div className="flex justify-center gap-4">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={handleBackToHome}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
           >
-            Back to Dashboard
+            Back to Home
           </button>
           
           {transaction.status === 'failed' && (
@@ -198,7 +220,7 @@ const Success: React.FC = () => {
           <h1 className="text-2xl font-bold mb-2">Error</h1>
           <p className="text-red-600 mb-6">{error}</p>
           <button
-            onClick={() => navigate('/')}
+            onClick={handleBackToHome}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
           >
             Back to Home
@@ -226,6 +248,4 @@ const Success: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default Success;
+}
