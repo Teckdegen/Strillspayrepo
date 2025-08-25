@@ -1,5 +1,5 @@
 import { toast } from 'sonner';
-import { processTransaction, TransactionResponse } from './peyflex';
+import { processTransaction } from './peyflex';
 
 type ServiceType = 'airtime' | 'data' | 'cable' | 'electricity';
 
@@ -40,123 +40,47 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
       throw new Error('Service type is required');
     }
 
-    console.log(`Processing ${service} transaction with reference: ${reference}`);
-
-    let result: TransactionResponse;
-    const requestData: any = { ...rest };
-
-    // Common validation for all services
-    if (!rest.phone || !/^\+?[0-9]{10,14}$/.test(rest.phone)) {
-      throw new Error('Valid phone number is required');
-    }
+    console.log(`Processing ${service} transaction with reference: ${reference}`, data);
 
     // Process based on service type
-    switch (service) {
-      case 'airtime':
-        if (!rest.amount || isNaN(Number(rest.amount)) || Number(rest.amount) <= 0) {
-          throw new Error('Valid amount is required for airtime transaction');
-        }
-        if (!rest.network) {
-          throw new Error('Network is required for airtime transaction');
-        }
-        result = await processTransaction('airtime', {
-          phone: rest.phone,
-          amount: rest.amount,
-          network: rest.network,
-        }, reference);
-        break;
-
-      case 'data':
-        if (!rest.plan) {
-          throw new Error('Data plan is required');
-        }
-        if (!rest.network) {
-          throw new Error('Network is required for data purchase');
-        }
-        result = await processTransaction('data', {
-          phone: rest.phone,
-          plan: rest.plan,
-          network: rest.network,
-        }, reference);
-        break;
-
-      case 'cable':
-        if (!rest.provider) {
-          throw new Error('Cable provider is required');
-        }
-        if (!rest.iuc) {
-          throw new Error('Smart card/IUC number is required');
-        }
-        if (!rest.plan) {
-          throw new Error('Cable plan is required');
-        }
-        result = await processTransaction('cable', {
-          provider: rest.provider,
-          iuc: rest.iuc,
-          plan: rest.plan,
-          phone: rest.phone,
-        }, reference);
-        break;
-
-      case 'electricity':
-        if (!rest.meter) {
-          throw new Error('Meter number is required');
-        }
-        if (!rest.amount || isNaN(Number(rest.amount)) || Number(rest.amount) <= 0) {
-          throw new Error('Valid amount is required for electricity payment');
-        }
-        if (!rest.plan) {
-          throw new Error('Electricity plan is required');
-        }
-        if (!rest.type) {
-          throw new Error('Meter type (prepaid/postpaid) is required');
-        }
-        result = await processTransaction('electricity', {
-          meter: rest.meter,
-          plan: rest.plan,
-          amount: rest.amount,
-          type: rest.type,
-          phone: rest.phone,
-        }, reference);
-        break;
-
-      default:
-        throw new Error(`Unsupported service type: ${service}`);
+    let result;
+    
+    try {
+      result = await processTransaction(
+        service as 'airtime' | 'data' | 'cable' | 'electricity',
+        {
+          ...rest,
+          phone: rest.phone.startsWith('0') ? `+234${rest.phone.slice(1)}` : rest.phone
+        },
+        reference
+      );
+    } catch (apiError: any) {
+      console.error(`API Error for ${service} (${reference}):`, apiError);
+      throw new Error(apiError.response?.data?.message || apiError.message || 'API request failed');
     }
 
-    // Log successful API response
     console.log(`API Response for ${service} (${reference}):`, result);
 
-    // Handle response
-    const response: TransactionResult = {
-      success: result.status === 'success',
+    if (result.status === 'failed') {
+      throw new Error(result.message || 'Transaction processing failed');
+    }
+
+    return {
+      success: true,
       message: result.message || 'Transaction processed successfully',
       data: result.data,
       transactionId: result.data?.transactionId || result.data?.id,
       reference: result.reference || reference,
       timestamp: result.timestamp || timestamp,
-      status: result.status === 'success' ? 'success' : 'failed'
+      status: 'success'
     };
-
-    if (!response.success) {
-      console.error(`Transaction failed: ${response.message}`, response);
-    }
-
-    // Show toast notification
-    if (response.success) {
-      toast.success(response.message || 'Transaction completed successfully');
-    } else {
-      toast.error(response.message || 'Transaction failed');
-    }
-
-    return response;
 
   } catch (error: any) {
     console.error(`Error processing ${data.service} transaction:`, error);
     
     const errorMessage = error?.response?.data?.message || 
-                        error?.message || 
-                        'Failed to process transaction';
+                       error?.message || 
+                       'Failed to process transaction';
     
     // Show error toast
     toast.error(errorMessage);
