@@ -42,6 +42,7 @@ const validateReference = (ref: string): boolean => {
 
 // Rate limiting queue processor
 const processQueue = async () => {
+  // If already processing or no items in queue, do nothing
   if (isProcessing || requestQueue.length === 0) return;
   
   isProcessing = true;
@@ -50,12 +51,19 @@ const processQueue = async () => {
   if (nextRequest) {
     try {
       await nextRequest();
+    } catch (error) {
+      console.error('Error processing request:', error);
     } finally {
       // Add delay between requests to respect rate limits
       await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY));
       isProcessing = false;
-      processQueue();
+      // Process next item in queue if any
+      if (requestQueue.length > 0) {
+        processQueue();
+      }
     }
+  } else {
+    isProcessing = false;
   }
 };
 
