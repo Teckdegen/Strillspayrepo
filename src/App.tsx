@@ -2,8 +2,7 @@ import '@rainbow-me/rainbowkit/styles.css';
 import { RainbowKitProvider, getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { createWeb3Modal } from '@web3modal/wagmi/react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { sonicMainnet } from './config/wagmi';
 import { Toaster } from 'sonner';
 import { useEffect } from 'react';
@@ -26,25 +25,13 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 
 const config = getDefaultConfig({
-  appName: 'Strills',
-  projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || 'fallback-project-id',
-  chains: [sonicMainnet] as any,
+  appName: 'StrillsPay',
+  projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || 'your-project-id',
+  chains: [sonicMainnet],
   ssr: false,
 });
 
 const queryClient = new QueryClient();
-
-// Create Web3Modal
-createWeb3Modal({
-  wagmiConfig: config,
-  projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID || 'your-project-id',
-  enableAnalytics: true,
-  themeMode: 'light',
-  themeVariables: {
-    '--w3m-font-family': 'Inter, sans-serif',
-    '--w3m-accent': '#3b82f6',
-  },
-});
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -57,7 +44,6 @@ const ScrollToTop = () => {
   return null;
 };
 
-// Main App Component
 function App() {
   return (
     <WagmiProvider config={config}>
@@ -91,7 +77,6 @@ function App() {
                   <Route path="/success" element={<Success />} />
                   <Route path="/payment" element={<Payment />} />
                   <Route path="/dashboard" element={<Dashboard />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
