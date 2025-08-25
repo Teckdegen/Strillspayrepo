@@ -106,10 +106,14 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
         ? rest.phone.slice(1)
         : rest.phone;
 
+      // Ensure network/provider is lowercase
+      const network = rest.network?.toLowerCase();
+      const provider = rest.provider?.toLowerCase();
+
       switch (service) {
         case 'airtime':
           result = await purchaseAirtime({
-            network: rest.network!,
+            network: network!,
             phone: formattedPhone,
             amount: rest.amount!
           });
@@ -117,7 +121,7 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
 
         case 'data':
           result = await purchaseData({
-            network: rest.network!,
+            network: network!,
             plan: rest.plan!,
             phone: formattedPhone
           });
@@ -126,11 +130,11 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
         case 'cable':
           // First verify IUC if provided
           if (rest.iuc) {
-            await verifyCableIUC(rest.provider!, rest.iuc);
+            await verifyCableIUC(provider!, rest.iuc);
           }
           
           result = await subscribeCable({
-            provider: rest.provider!,
+            provider: provider!,
             iuc: rest.iuc!,
             plan: rest.plan!,
             phone: formattedPhone
