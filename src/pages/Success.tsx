@@ -4,8 +4,9 @@ import { CheckCircle2, Clock, AlertCircle, XCircle, Loader2 } from 'lucide-react
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { format } from 'date-fns';
-import { processServiceTransaction } from '@/services/transactionService';
 import { toast } from 'sonner';
+
+// TODO: Import your new service API here
 
 interface TransactionData {
   status: 'pending' | 'success' | 'failed' | 'ready';
@@ -78,33 +79,32 @@ export default function Success() {
     setIsProcessing(true);
     
     try {
-      const serviceType = transaction.service.toLowerCase() as 'airtime' | 'data' | 'cable' | 'electricity';
+      // TODO: Add your new service API call here
+      // Example:
+      // const serviceData = {
+      //   service: transaction.service.toLowerCase(),
+      //   provider: transaction.provider,
+      //   network: transaction.networkId || transaction.network,
+      //   plan: transaction.planId || transaction.plan,
+      //   phone: transaction.mobileNumber || transaction.recipient,
+      //   amount: transaction.amount.toString(),
+      //   reference: transaction.transactionHash,
+      // };
+      // 
+      // const result = await yourNewServiceAPI(serviceData);
+      // 
+      // if (result.success) {
+      //   setTransaction(prev => prev ? {
+      //     ...prev,
+      //     status: 'success',
+      //     serviceProcessed: true
+      //   } : null);
+      //   toast.success('Service processed successfully!');
+      // } else {
+      //   throw new Error(result.message);
+      // }
       
-      const serviceData = {
-        service: serviceType,
-        provider: transaction.provider,
-        network: transaction.networkId || transaction.network,
-        plan: transaction.planId || transaction.plan,
-        phone: transaction.mobileNumber || transaction.recipient,
-        amount: transaction.amount.toString(),
-        iuc: transaction.smartCardNumber,
-        meter: transaction.meterNumber,
-        reference: transaction.transactionHash,
-      };
-
-      const result = await processServiceTransaction(serviceData);
-      
-      if (result.success) {
-        setTransaction(prev => prev ? {
-          ...prev,
-          status: 'success',
-          serviceProcessed: true
-        } : null);
-        
-        toast.success('Service processed successfully!');
-      } else {
-        throw new Error(result.message || 'Failed to process service');
-      }
+      toast.info('Service API not implemented yet');
     } catch (error: any) {
       console.error('Service processing error:', error);
       toast.error(error.message || 'Failed to process service. Please try again.');

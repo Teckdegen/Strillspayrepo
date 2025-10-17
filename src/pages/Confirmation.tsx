@@ -8,7 +8,8 @@ import { LitCard } from '../components/LitCard';
 import { LitButton } from '../components/LitButton';
 import { fetchExchangeRate, convertNairaToUSDC } from '../constants';
 import { USDC_CONTRACT_ADDRESS, TREASURY_ADDRESS, USDC_ABI, sonicMainnet } from '../config/wagmi';
-import { processServiceTransaction } from '../services/transactionService';
+
+// TODO: Import your new service API here
 
 interface ConfirmationState {
   service: string;
