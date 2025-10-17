@@ -88,7 +88,8 @@ api.interceptors.response.use(
     // Handle common error cases
     if (error.response) {
       // Server responded with error status code
-      const message = error.response.data?.message || error.response.statusText || 'An error occurred';
+      const errorData = error.response.data as any;
+      const message = errorData?.message || error.response.statusText || 'An error occurred';
       return Promise.reject(new Error(message));
     } else if (error.request) {
       // Request was made but no response received

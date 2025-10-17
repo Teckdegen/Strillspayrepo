@@ -3,9 +3,7 @@ import {
   purchaseAirtime, 
   purchaseData, 
   subscribeCable, 
-  rechargeElectricity,
-  getServices,
-  getPlans
+  rechargeElectricity
 } from './peyflex';
 
 type ServiceType = 'airtime' | 'data' | 'cable' | 'electricity';
@@ -33,22 +31,6 @@ export interface TransactionResult {
   status: 'success' | 'failed' | 'pending';
 }
 
-// Get available services or plans
-export const fetchServiceData = async (type: 'services' | 'plans', serviceType?: ServiceType, id?: string) => {
-  try {
-    if (type === 'services') {
-      return await getServices(serviceType!);
-    } else if (type === 'plans' && serviceType && id) {
-      if (serviceType === 'data' || serviceType === 'cable') {
-        return await getPlans(serviceType, id);
-      }
-    }
-    throw new Error('Invalid service type or missing parameters');
-  } catch (error: any) {
-    console.error(`Error fetching ${type}:`, error);
-    throw new Error(error.message || `Failed to fetch ${type}`);
-  }
-};
 
 const validateTransactionData = (data: TransactionData): { valid: boolean; error?: string } => {
   if (!data) {
@@ -172,7 +154,7 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
           result = await purchaseAirtime({
             network,
             amount: Number(rest.amount),
-            mobile_number: formattedPhone
+            phone: formattedPhone
           });
           break;
 
@@ -183,7 +165,7 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
           result = await purchaseData({
             network,
             plan: rest.plan,
-            mobile_number: formattedPhone
+            phone: formattedPhone
           });
           break;
 
@@ -197,7 +179,7 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
             provider,
             iuc: rest.iuc,
             plan: rest.plan,
-            mobile_number: formattedPhone
+            phone: formattedPhone
           });
           break;
 
@@ -213,7 +195,7 @@ export const processServiceTransaction = async (data: TransactionData): Promise<
             plan: rest.plan,
             amount: Number(rest.amount),
             type: rest.type || 'prepaid',
-            mobile_number: formattedPhone
+            phone: formattedPhone
           });
           break;
 

@@ -38,9 +38,10 @@ export default function Success() {
     const params = new URLSearchParams(location.search);
     
     if (state) {
-      const txData = {
+      const normalizedStatus = state.serviceProcessed ? 'success' : state.status === 'success' ? 'ready' : state.status;
+      const txData: TransactionData = {
         ...state,
-        status: state.serviceProcessed ? 'success' : state.status === 'success' ? 'ready' : state.status,
+        status: normalizedStatus as 'pending' | 'success' | 'failed' | 'ready',
         timestamp: state.timestamp || new Date().toISOString(),
       };
       setTransaction(txData);
@@ -153,18 +154,20 @@ export default function Success() {
         bgColor: 'bg-red-50',
         textColor: 'text-red-800',
       },
-    }[status] || statusConfig.pending;
+    };
+    
+    const currentStatus = statusConfig[status] || statusConfig.pending;
 
     return (
       <div className="space-y-6">
         <div className="flex flex-col items-center justify-center space-y-4">
-          <div className={`p-4 rounded-full ${statusConfig.bgColor}`}>
-            {statusConfig.icon}
+          <div className={`p-4 rounded-full ${currentStatus.bgColor}`}>
+            {currentStatus.icon}
           </div>
-          <h2 className={`text-2xl font-bold ${statusConfig.textColor}`}>
-            {statusConfig.title}
+          <h2 className={`text-2xl font-bold ${currentStatus.textColor}`}>
+            {currentStatus.title}
           </h2>
-          <p className="text-center text-gray-600">{statusConfig.description}</p>
+          <p className="text-center text-gray-600">{currentStatus.description}</p>
         </div>
 
         <Card className="border border-gray-200">
@@ -297,7 +300,7 @@ export default function Success() {
         </div>
       </div>
       
-      <style jsx global>{`
+      <style>{`
         @keyframes blob {
           0% {
             transform: translate(0px, 0px) scale(1);
